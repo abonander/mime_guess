@@ -1,5 +1,8 @@
 [package]
 
 name = "mime_guess"
-version = "0.0.1"
+version = "1.0.0"
 authors = ["Austin Bonander <austin.bonander@gmail.com>"]
+
+[dependencies]
+mime = "*"
