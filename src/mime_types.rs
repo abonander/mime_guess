@@ -1,7 +1,10 @@
 // Probably not exhaustive; keep updated.
 // Needs to be sorted by extension, and extensions need to be lowercase 
 // for the binary search to work!
-/// A mapping of known file extensions and their MIME types. 
+/// A mapping of known file extensions and their MIME types.
+///
+/// Sorted by file extension to facilitate binary search.
+///
 /// Source: https://github.com/samuelneff/MimeTypeMap/blob/master/src/MimeTypeMap.cs
 pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("323", "text/h323"),
