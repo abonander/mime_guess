@@ -1,0 +1,5 @@
+[package]
+
+name = "mime_guess"
+version = "0.0.1"
+authors = ["Austin Bonander <austin.bonander@gmail.com>"]
