@@ -3,7 +3,7 @@ env:
     - secure: UrgDBZB19CLozisaUUVMNHylQBGogH+1B0Q676aLBICM+Ie6ydmEoVzVycOp7OmuPoqt3l1/oeG/2E13TjUyjo0WR++DlmStA0+GGf8YJbXfQR8UWN/8UkVwZPwiQiAz3xE/73kyxuqfRq4qQtUPF07JB/KCRvEY8wZYjrixm6Q=
 
 language: rust
-
-after_script:
-  - cargo doc
-  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
+after_success:
+- cp -R target/doc doc
+- curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
+- rm -r doc  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
