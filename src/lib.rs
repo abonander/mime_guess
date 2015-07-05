@@ -1,7 +1,6 @@
 //! Guessing of MIME types by file extension.
 //!
 //! Uses a static list of file-extension : MIME type mappings.
-#![feature(os, path)]
 
 extern crate mime;
 
@@ -21,9 +20,9 @@ mod mime_types;
 /// then the MIME type is assumed to be `application/octet-stream`.
 ///
 /// ##Note
-/// **Guess** is the operative word here, as there are no guarantees that the contents of the file 
-/// that `path` points to match the MIME type associated with the path's extension. 
-/// 
+/// **Guess** is the operative word here, as there are no guarantees that the contents of the file
+/// that `path` points to match the MIME type associated with the path's extension.
+///
 /// Take care when processing files with assumptions based on the return value of this function.
 pub fn guess_mime_type(path: &Path) -> Mime {
     let ext = path.extension().and_then(OsStr::to_str).unwrap_or("");
@@ -43,12 +42,12 @@ pub fn get_mime_type(search_ext: &str) -> Mime {
 
 /// Get the MIME type string associated with a file extension.
 ///
-/// 
+///
 /// `search_ext` is converted to lowercase for a case-insensitive binary search.
 ///
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
-    if search_ext.is_empty() { return None; }    
+    if search_ext.is_empty() { return None; }
 
     let search_ext = search_ext.to_ascii_lowercase();
 
