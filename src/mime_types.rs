@@ -208,7 +208,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("jpe", "image/jpeg"),
 	("jpeg", "image/jpeg"),
 	("jpg", "image/jpeg"),
-	("js", "application/x-javascript"),
+	("js", "application/javascript"),
 	("json", "application/json"),
 	("jsx", "text/jscript"),
 	("jsxbin", "text/plain"),
