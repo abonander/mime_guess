@@ -1,5 +1,5 @@
 // Probably not exhaustive; keep updated.
-// Needs to be sorted by extension, and extensions need to be lowercase 
+// Needs to be sorted by extension, and extensions need to be lowercase
 // for the binary search to work!
 /// A mapping of known file extensions and their MIME types.
 ///
@@ -380,6 +380,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("roff", "application/x-troff"),
 	("rpm", "audio/x-pn-realaudio-plugin"),
 	("rqy", "text/x-ms-rqy"),
+	("rs", "text/x-rust"),
 	("rtf", "application/rtf"),
 	("rtx", "text/richtext"),
 	("ruleset", "application/xml"),
@@ -444,6 +445,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("tlh", "text/plain"),
 	("tli", "text/plain"),
 	("toc", "application/octet-stream"),
+	("toml", "text/x-toml"),
 	("tr", "application/x-troff"),
 	("trm", "application/x-msterminal"),
 	("trx", "application/xml"),
@@ -565,6 +567,8 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("xss", "application/xml"),
 	("xtp", "application/octet-stream"),
 	("xwd", "image/x-xwindowdump"),
+	("yaml", "text/x-yaml"),
+	("yml", "text/x-yaml"),
 	("z", "application/x-compress"),
 	("zip", "application/x-zip-compressed"),
 ];
