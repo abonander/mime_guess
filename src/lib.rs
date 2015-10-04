@@ -30,6 +30,27 @@ pub fn guess_mime_type(path: &Path) -> Mime {
     get_mime_type(ext)
 }
 
+/// Guess the MIME type of the string by its tail.
+///
+/// If the given string has no extension tail, or its extension has no known MIME type mapping,
+/// then the MIME type is assumed to be `application/octet-stream`.
+///
+/// ##Note
+/// **Guess** is the operative word here, as there are no guarantees that the contents of the file
+/// that `path` points to match the MIME type associated with the path's extension.
+///
+/// Take care when processing files with assumptions based on the return value of this function.
+pub fn guess_mime_type_by_tail(path: &str) -> Mime {
+    let ext = match path.rfind('.') {
+        Some(pos) => unsafe {
+            path.slice_unchecked(pos + 1, path.len())
+        },
+        None => "",
+    };
+
+    get_mime_type(ext)
+}
+
 /// Get the MIME type associated with a file extension.
 ///
 /// If there is no association for the extension, or `ext` is empty,
@@ -63,13 +84,22 @@ pub fn octet_stream() -> Mime {
 #[cfg(test)]
 mod tests {
     use mime::Mime;
-    use super::{get_mime_type, MIME_TYPES};
+    use super::{get_mime_type, guess_mime_type_by_tail, MIME_TYPES};
 
     #[test]
     fn test_mime_type_guessing() {
         assert_eq!(get_mime_type("gif").to_string(), "image/gif".to_string());
         assert_eq!(get_mime_type("txt").to_string(), "text/plain".to_string());
         assert_eq!(get_mime_type("blahblah").to_string(), "application/octet-stream".to_string());
+    }
+
+    #[test]
+    fn test_mime_type_guessing_by_tail() {
+        assert_eq!(guess_mime_type_by_tail("/path/to/some/file.gif").to_string(), "image/gif".to_string());
+        assert_eq!(guess_mime_type_by_tail("/path/to/some/file.txt").to_string(), "text/plain".to_string());
+        assert_eq!(guess_mime_type_by_tail("/path/to/some/file.with.dots.txt").to_string(), "text/plain".to_string());
+        assert_eq!(guess_mime_type_by_tail("/path/to/some/").to_string(), "application/octet-stream".to_string());
+        assert_eq!(guess_mime_type_by_tail("/path/to/some/dot.at.end.").to_string(), "application/octet-stream".to_string());
     }
 
     #[test]
