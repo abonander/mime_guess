@@ -5,7 +5,7 @@
 ///
 /// Sorted by file extension to facilitate binary search.
 ///
-/// Source: https://github.com/samuelneff/MimeTypeMap/blob/master/src/MimeTypeMap.cs
+/// Source: https://github.com/samuelneff/MimeTypeMap/blob/master/src/MimeTypes/MimeTypeMap.cs
 pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("323", "text/h323"),
 	("3g2", "video/3gpp2"),
