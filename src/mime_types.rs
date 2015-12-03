@@ -430,6 +430,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("sv4crc", "application/x-sv4crc"),
 	("svc", "application/xml"),
 	("svg", "image/svg+xml"),
+	("svgz", "image/svg+xml"),
 	("swf", "application/x-shockwave-flash"),
 	("t", "application/x-troff"),
 	("tar", "application/x-tar"),
