@@ -453,7 +453,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
 	("trx", "application/xml"),
 	("ts", "video/vnd.dlna.mpeg-tts"),
 	("tsv", "text/tab-separated-values"),
-	("ttf", "application/octet-stream"),
+	("ttf", "application/font-sfnt"),
 	("tts", "video/vnd.dlna.mpeg-tts"),
 	("txt", "text/plain"),
 	("u32", "application/octet-stream"),
