@@ -24,8 +24,8 @@ mod mime_types;
 /// that `path` points to match the MIME type associated with the path's extension.
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
-pub fn guess_mime_type(path: &Path) -> Mime {
-    let ext = path.extension().and_then(OsStr::to_str).unwrap_or("");
+pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
+    let ext = path.as_ref().extension().and_then(OsStr::to_str).unwrap_or("");
 
     get_mime_type(ext)
 }
@@ -63,13 +63,17 @@ pub fn octet_stream() -> Mime {
 #[cfg(test)]
 mod tests {
     use mime::Mime;
-    use super::{get_mime_type, MIME_TYPES};
+    use std::path::Path;
+    use super::{get_mime_type, guess_mime_type, MIME_TYPES};
 
     #[test]
     fn test_mime_type_guessing() {
         assert_eq!(get_mime_type("gif").to_string(), "image/gif".to_string());
         assert_eq!(get_mime_type("txt").to_string(), "text/plain".to_string());
         assert_eq!(get_mime_type("blahblah").to_string(), "application/octet-stream".to_string());
+
+        assert_eq!(guess_mime_type(Path::new("/path/to/file.gif")).to_string(), "image/gif".to_string());
+        assert_eq!(guess_mime_type("/path/to/file.gif").to_string(), "image/gif".to_string());
     }
 
     #[test]
