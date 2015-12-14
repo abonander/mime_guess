@@ -43,8 +43,8 @@ pub fn get_mime_type(search_ext: &str) -> Mime {
 
 /// Get the MIME type string associated with a file extension. Case-insensitive.
 ///
-/// If it is not already lowercase,
-/// `search_ext` will be converted to lowercase to facilitate the search.
+/// If `search_ext` is not already lowercase,
+/// it will be converted to lowercase to facilitate the search.
 ///
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
@@ -62,16 +62,16 @@ pub fn octet_stream() -> Mime {
 }
 
 /// Convert `mixed` to lowercase if it is not already all lowercase.
-fn is_ascii_lowercase(mixed: &str) -> Cow<str> {
+fn to_lowercase_cow(mixed: &str) -> Cow<str> {
     use std::char;
 
     // This seems like an unnecessary optimization but on my machine
     // it cuts the average search time by a factor of 3 over unconditionally
     // calling .to_lowercase().
-    if mixed.chars().all(|ch| ch.is_lowercase() || ch.is_numeric()) {
-        mixed.into()
-    } else {
+    if mixed.chars().any(char::is_uppercase) {
         mixed.to_lowercase().into()
+    } else {
+        mixed.into()
     }
 }
 
@@ -108,7 +108,7 @@ mod tests {
     fn test_are_extensions_lowercase() {
         for &(mime_ext, _) in MIME_TYPES {
             assert!(
-                mime_ext.chars().all(|ch| ch.to_ascii_lowercase() == ch)), 
+                mime_ext.chars().all(|ch| ch.to_ascii_lowercase() == ch), 
                 "extension not lowercase: {}", mime_ext
             );
         }
