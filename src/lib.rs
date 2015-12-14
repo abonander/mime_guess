@@ -1,6 +1,7 @@
 //! Guessing of MIME types by file extension.
 //!
 //! Uses a static list of file-extension : MIME type mappings.
+#![cfg_attr(feature = "bench", feature(test))]
 
 extern crate mime;
 
@@ -8,15 +9,15 @@ use mime::Mime;
 
 pub use mime_types::MIME_TYPES;
 
-use std::ascii::AsciiExt;
+use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::path::Path;
 
 mod mime_types;
 
-/// Guess the MIME type of the `Path` by its extension.
+/// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
 ///
-/// If the given `Path` has no extension, or its extension has no known MIME type mapping,
+/// If `path` has no extension, or its extension has no known MIME type mapping,
 /// then the MIME type is assumed to be `application/octet-stream`.
 ///
 /// ##Note
@@ -40,17 +41,17 @@ pub fn get_mime_type(search_ext: &str) -> Mime {
         .unwrap_or_else(octet_stream)
 }
 
-/// Get the MIME type string associated with a file extension.
+/// Get the MIME type string associated with a file extension. Case-insensitive.
 ///
-///
-/// `search_ext` is converted to lowercase for a case-insensitive binary search.
+/// If it is not already lowercase,
+/// `search_ext` will be converted to lowercase to facilitate the search.
 ///
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     if search_ext.is_empty() { return None; }
 
-    let search_ext = search_ext.to_ascii_lowercase();
-
+    let search_ext = to_lowercase_cow(search_ext);
+    
     MIME_TYPES.binary_search_by(|&(ext, _)| ext.cmp(&search_ext))
         .ok().map(|idx| MIME_TYPES[idx].1)
 }
@@ -60,16 +61,31 @@ pub fn octet_stream() -> Mime {
     "application/octet-stream".parse().unwrap()
 }
 
+/// Convert `mixed` to lowercase if it is not already all lowercase.
+fn is_ascii_lowercase(mixed: &str) -> Cow<str> {
+    use std::char;
+
+    // This seems like an unnecessary optimization but on my machine
+    // it cuts the average search time by a factor of 3 over unconditionally
+    // calling .to_lowercase().
+    if mixed.chars().all(|ch| ch.is_lowercase() || ch.is_numeric()) {
+        mixed.into()
+    } else {
+        mixed.to_lowercase().into()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use mime::Mime;
+    use std::ascii::AsciiExt;
     use std::path::Path;
     use super::{get_mime_type, guess_mime_type, MIME_TYPES};
 
     #[test]
     fn test_mime_type_guessing() {
         assert_eq!(get_mime_type("gif").to_string(), "image/gif".to_string());
-        assert_eq!(get_mime_type("txt").to_string(), "text/plain".to_string());
+        assert_eq!(get_mime_type("TXT").to_string(), "text/plain".to_string());
         assert_eq!(get_mime_type("blahblah").to_string(), "application/octet-stream".to_string());
 
         assert_eq!(guess_mime_type(Path::new("/path/to/file.gif")).to_string(), "image/gif".to_string());
@@ -80,14 +96,54 @@ mod tests {
     fn test_are_extensions_sorted() {
         // To make binary search work, extensions need to be sorted in ascending order.
     	for (curr, next) in MIME_TYPES.iter().zip(MIME_TYPES.iter().skip(1)) {
-    		assert!(curr <= next, "MIME type mappings are not sorted! Failed assert: {:?} <= {:?}", curr, next);
+    		assert!(
+                curr.0 <= next.0, 
+                "MIME type mappings are not sorted! Failed assert: {:?} <= {:?}",
+                curr.0, next.0
+            );
     	}
+    }
+
+    #[test]
+    fn test_are_extensions_lowercase() {
+        for &(mime_ext, _) in MIME_TYPES {
+            assert!(
+                mime_ext.chars().all(|ch| ch.to_ascii_lowercase() == ch)), 
+                "extension not lowercase: {}", mime_ext
+            );
+        }
     }
 
     #[test]
     fn test_are_mime_types_parseable() {
         for &(_, mime) in MIME_TYPES {
             mime.parse::<Mime>().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_are_extensions_ascii() {
+        for &(ext, _) in MIME_TYPES {
+            assert!(ext.is_ascii(), "Extension not ASCII: {:?}", ext);
+        }
+    }
+}
+
+#[cfg(feature = "bench")]
+mod bench {
+    extern crate test;
+
+    use self::test::Bencher;
+
+    use super::*;
+
+    /// WARNING: this may take a while!
+    #[bench]
+    fn bench_mime_str(b: &mut Bencher) {
+        for &(mime_ext, _) in MIME_TYPES {
+            b.iter(|| {
+                get_mime_type_str(mime_ext).expect(mime_ext);
+            });
         }
     }
 }

@@ -8,5 +8,8 @@ description = "A simple crate for detection of a file's MIME type by its extensi
 keywords = ["mime", "filesystem", "extension"]
 repository = "https://github.com/cybergeek94/mime_guess"
 
+[features]
+bench = []
+
 [dependencies]
 mime = "0.1"
