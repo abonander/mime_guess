@@ -9,7 +9,7 @@ Contributing
 
 Is the MIME type for a file extension wrong or missing? Great! Well, not great for us, but great for you if you'd like to open a pull request! 
 
-The file extension -> MIME type mappings are listed in `src/mime_types.rs`. **The list is sorted alphabetically by file extension.** This is necessary for the search to work properly, and is covered by the test suite. 
+The file extension -> MIME type mappings are listed in `src/mime_types.rs`. **The list is sorted alphabetically by file extension, and all extensions are lowercase (where applicable).** This is necessary for the search to work properly, and is covered by the test suite. 
 
 Simply add or update the appropriate string pair(s) to make the correction(s) needed. Run `cargo test` to make sure the library continues to work correctly.
 
