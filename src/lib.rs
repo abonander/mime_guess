@@ -26,9 +26,24 @@ mod mime_types;
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
+    guess_mime_type_opt(path)
+        .unwrap_or_else(octet_stream)
+}
+
+/// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
+///
+/// If `path` has no extension, or its extension has no known MIME type mapping,
+/// then `None` returned.
+///
+/// ##Note
+/// **Guess** is the operative word here, as there are no guarantees that the contents of the file
+/// that `path` points to match the MIME type associated with the path's extension.
+///
+/// Take care when processing files with assumptions based on the return value of this function.
+pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
     let ext = path.as_ref().extension().and_then(OsStr::to_str).unwrap_or("");
 
-    get_mime_type(ext)
+    get_mime_type_opt(ext)
 }
 
 /// Get the MIME type associated with a file extension.
@@ -36,9 +51,17 @@ pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
 /// If there is no association for the extension, or `ext` is empty,
 /// `application/octet-stream` is returned.
 pub fn get_mime_type(search_ext: &str) -> Mime {
+    get_mime_type_opt(search_ext)
+        .unwrap_or_else(octet_stream)
+}
+
+/// Get the MIME type associated with a file extension.
+///
+/// If there is no association for the extension, or `ext` is empty,
+/// `None` is returned.
+pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
     get_mime_type_str(search_ext)
         .map(|mime| mime.parse::<Mime>().unwrap())
-        .unwrap_or_else(octet_stream)
 }
 
 /// Get the MIME type string associated with a file extension. Case-insensitive.
@@ -81,6 +104,7 @@ mod tests {
     use std::ascii::AsciiExt;
     use std::path::Path;
     use super::{get_mime_type, guess_mime_type, MIME_TYPES};
+    use super::{get_mime_type_opt, guess_mime_type_opt};
 
     #[test]
     fn test_mime_type_guessing() {
@@ -90,6 +114,16 @@ mod tests {
 
         assert_eq!(guess_mime_type(Path::new("/path/to/file.gif")).to_string(), "image/gif".to_string());
         assert_eq!(guess_mime_type("/path/to/file.gif").to_string(), "image/gif".to_string());
+    }
+
+    #[test]
+    fn test_mime_type_guessing_opt() {
+        assert_eq!(get_mime_type_opt("gif").unwrap().to_string(), "image/gif".to_string());
+        assert_eq!(get_mime_type_opt("TXT").unwrap().to_string(), "text/plain".to_string());
+        assert_eq!(get_mime_type_opt("blahblah"), None);
+
+        assert_eq!(guess_mime_type_opt("/path/to/file.gif").unwrap().to_string(), "image/gif".to_string());
+        assert_eq!(guess_mime_type_opt("/path/to/file"), None);
     }
 
     #[test]
