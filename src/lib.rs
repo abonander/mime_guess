@@ -4,16 +4,15 @@
 #![cfg_attr(feature = "bench", feature(test))]
 
 extern crate mime;
+extern crate phf;
 
 use mime::Mime;
-
-pub use mime_types::MIME_TYPES;
 
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::path::Path;
 
-mod mime_types;
+include!("mime_types_generated.rs");
 
 /// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
 ///
@@ -74,9 +73,7 @@ pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     if search_ext.is_empty() { return None; }
 
     let search_ext = to_lowercase_cow(search_ext);
-    
-    MIME_TYPES.binary_search_by(|&(ext, _)| ext.cmp(&search_ext))
-        .ok().map(|idx| MIME_TYPES[idx].1)
+    MIME_TYPES.get(&*search_ext).cloned()  
 }
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
@@ -127,20 +124,8 @@ mod tests {
     }
 
     #[test]
-    fn test_are_extensions_sorted() {
-        // To make binary search work, extensions need to be sorted in ascending order.
-    	for (curr, next) in MIME_TYPES.iter().zip(MIME_TYPES.iter().skip(1)) {
-    		assert!(
-                curr.0 <= next.0, 
-                "MIME type mappings are not sorted! Failed assert: {:?} <= {:?}",
-                curr.0, next.0
-            );
-    	}
-    }
-
-    #[test]
     fn test_are_extensions_lowercase() {
-        for &(mime_ext, _) in MIME_TYPES {
+        for (mime_ext, _) in &MIME_TYPES {
             assert!(
                 mime_ext.chars().all(|ch| ch.to_ascii_lowercase() == ch), 
                 "extension not lowercase: {}", mime_ext
@@ -150,14 +135,14 @@ mod tests {
 
     #[test]
     fn test_are_mime_types_parseable() {
-        for &(_, mime) in MIME_TYPES {
+        for (_, mime) in &MIME_TYPES {
             mime.parse::<Mime>().unwrap();
         }
     }
 
     #[test]
     fn test_are_extensions_ascii() {
-        for &(ext, _) in MIME_TYPES {
+        for (ext, _) in &MIME_TYPES {
             assert!(ext.is_ascii(), "Extension not ASCII: {:?}", ext);
         }
     }
@@ -169,12 +154,12 @@ mod bench {
 
     use self::test::Bencher;
 
-    use super::*;
+    use super::{get_mime_type_str, MIME_TYPES};
 
     /// WARNING: this may take a while!
     #[bench]
     fn bench_mime_str(b: &mut Bencher) {
-        for &(mime_ext, _) in MIME_TYPES {
+        for (mime_ext, _) in &MIME_TYPES {
             b.iter(|| {
                 get_mime_type_str(mime_ext).expect(mime_ext);
             });
