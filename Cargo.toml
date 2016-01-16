@@ -1,7 +1,7 @@
 [package]
 
 name = "mime_guess"
-version = "1.3.0"
+version = "1.4.0"
 authors = ["Austin Bonander <austin.bonander@gmail.com>"]
 license = "MIT"
 description = "A simple crate for detection of a file's MIME type by its extension."
