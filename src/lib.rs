@@ -12,7 +12,13 @@ use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::path::Path;
 
+use std::char;
+
 include!("mime_types_generated.rs");
+
+#[cfg(test)]
+#[path = "mime_types.rs"]
+mod mime_types_src;
 
 /// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
 ///
@@ -83,8 +89,6 @@ pub fn octet_stream() -> Mime {
 
 /// Convert `mixed` to lowercase if it is not already all lowercase.
 fn to_lowercase_cow(mixed: &str) -> Cow<str> {
-    use std::char;
-
     // This seems like an unnecessary optimization but on my machine
     // it cuts the average search time by a factor of 3 over unconditionally
     // calling .to_lowercase().
@@ -122,17 +126,7 @@ mod tests {
         assert_eq!(guess_mime_type_opt("/path/to/file.gif").unwrap().to_string(), "image/gif".to_string());
         assert_eq!(guess_mime_type_opt("/path/to/file"), None);
     }
-
-    #[test]
-    fn test_are_extensions_lowercase() {
-        for (mime_ext, _) in &MIME_TYPES {
-            assert!(
-                mime_ext.chars().all(|ch| ch.to_ascii_lowercase() == ch), 
-                "extension not lowercase: {}", mime_ext
-            );
-        }
-    }
-
+ 
     #[test]
     fn test_are_mime_types_parseable() {
         for (_, mime) in &MIME_TYPES {
@@ -140,12 +134,28 @@ mod tests {
         }
     }
 
+    // RFC: Is this test necessary anymore? --@cybergeek94, 2/1/2016
     #[test]
     fn test_are_extensions_ascii() {
         for (ext, _) in &MIME_TYPES {
             assert!(ext.is_ascii(), "Extension not ASCII: {:?}", ext);
         }
     }
+
+    #[test]
+    fn test_are_extensions_sorted() {
+        use mime_types_src::MIME_TYPES;
+
+        for (&(ext, _), &(n_ext, _)) in MIME_TYPES.iter().zip(MIME_TYPES.iter().skip(1)) {
+            assert!(
+                ext <= n_ext, 
+                "Extensions in src/mime_types should be sorted alphabetically
+                in ascending order. Failed assert: {:?} <= {:?}",
+                ext, n_ext
+            );
+        }
+    }
+        
 }
 
 #[cfg(feature = "bench")]
