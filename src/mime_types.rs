@@ -245,6 +245,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
     ("manifest", "application/x-ms-manifest"),
     ("map", "text/plain"),
     ("master", "application/xml"),
+    ("md", "text/x-markdown"),
     ("mda", "application/msaccess"),
     ("mdb", "application/x-msaccess"),
     ("mde", "application/msaccess"),
