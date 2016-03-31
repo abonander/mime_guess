@@ -5,14 +5,13 @@
 
 extern crate mime;
 extern crate phf;
+extern crate unicase;
 
 use mime::Mime;
+use unicase::UniCase;
 
-use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::path::Path;
-
-use std::char;
 
 include!("mime_types_generated.rs");
 
@@ -78,25 +77,18 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     if search_ext.is_empty() { return None; }
 
-    let search_ext = to_lowercase_cow(search_ext);
-    MIME_TYPES.get(&*search_ext).cloned()  
+    // This transmute should be safe as `get` will not store the reference with
+    // the expanded lifetime. This is due to `Borrow` being overly strict and
+    // can't have an impl for `&'static str` to `Borrow<&'a str>`.
+    //
+    // See https://github.com/rust-lang/rust/issues/28853#issuecomment-158735548
+    let search_ext = unsafe { ::std::mem::transmute::<&str, &'static str>(search_ext) };
+    MIME_TYPES.get(&UniCase(search_ext)).cloned()
 }
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
 pub fn octet_stream() -> Mime {
     "application/octet-stream".parse().unwrap()
-}
-
-/// Convert `mixed` to lowercase if it is not already all lowercase.
-fn to_lowercase_cow(mixed: &str) -> Cow<str> {
-    // This seems like an unnecessary optimization but on my machine
-    // it cuts the average search time by a factor of 3 over unconditionally
-    // calling .to_lowercase().
-    if mixed.chars().any(char::is_uppercase) {
-        mixed.to_lowercase().into()
-    } else {
-        mixed.into()
-    }
 }
 
 #[cfg(test)]
@@ -126,7 +118,7 @@ mod tests {
         assert_eq!(guess_mime_type_opt("/path/to/file.gif").unwrap().to_string(), "image/gif".to_string());
         assert_eq!(guess_mime_type_opt("/path/to/file"), None);
     }
- 
+
     #[test]
     fn test_are_mime_types_parseable() {
         for (_, mime) in &MIME_TYPES {
@@ -148,14 +140,14 @@ mod tests {
 
         for (&(ext, _), &(n_ext, _)) in MIME_TYPES.iter().zip(MIME_TYPES.iter().skip(1)) {
             assert!(
-                ext <= n_ext, 
+                ext <= n_ext,
                 "Extensions in src/mime_types should be sorted alphabetically
                 in ascending order. Failed assert: {:?} <= {:?}",
                 ext, n_ext
             );
         }
     }
-        
+
 }
 
 #[cfg(feature = "bench")]
@@ -170,6 +162,17 @@ mod bench {
     #[bench]
     fn bench_mime_str(b: &mut Bencher) {
         for (mime_ext, _) in &MIME_TYPES {
+            b.iter(|| {
+                get_mime_type_str(mime_ext).expect(mime_ext);
+            });
+        }
+    }
+
+    #[bench]
+    fn bench_mime_str_uppercase(b: &mut Bencher) {
+        let uppercased : Vec<_> = MIME_TYPES.into_iter().map(|(s, _)| s.to_uppercase()).collect();
+
+        for mime_ext in &uppercased {
             b.iter(|| {
                 get_mime_type_str(mime_ext).expect(mime_ext);
             });

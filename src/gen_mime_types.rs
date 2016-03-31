@@ -1,4 +1,7 @@
 extern crate phf_codegen;
+extern crate unicase;
+
+use unicase::UniCase;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -8,19 +11,19 @@ const GENERATED_FILE: &'static str = "src/mime_types_generated.rs";
 
 mod mime_types;
 
-fn main() { 
+fn main() {
     let mime_types: Vec<_> = mime_types::MIME_TYPES.iter()
         .map(|&(k, v)| (k.to_lowercase(), v))
         .collect();
 
     let mut outfile = BufWriter::new(File::create(GENERATED_FILE).unwrap());
 
-    write!(outfile, "static MIME_TYPES: phf::Map<&'static str, &'static str> = ").unwrap();    
-    
-    let mut map = phf_codegen::Map::<&str>::new();
+    write!(outfile, "static MIME_TYPES: phf::Map<UniCase<&'static str>, &'static str> = ").unwrap();
+
+    let mut map = phf_codegen::Map::<UniCase<&str>>::new();
 
     for &(ref key, val) in &mime_types {
-        map.entry(key, &format!("{:?}", val));
+        map.entry(UniCase(key), &format!("{:?}", val));
     }
 
     map.build(&mut outfile).unwrap();
