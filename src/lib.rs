@@ -96,7 +96,7 @@ pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
 /// Returns `None` if the mime is unknown. 
 pub fn get_extensions(mime: &Mime) -> Option<&'static [&'static str]> {
     let no_param_mime = format!("{}/{}", mime.0, mime.1);
-    get_extensions_str(&no_param_mime);
+    get_extensions_str(&no_param_mime)
 }
 
 /// Get a list of known extensions for a mime type. Ignores parameters (only searches
