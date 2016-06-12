@@ -7,6 +7,7 @@ license = "MIT"
 description = "A simple crate for detection of a file's MIME type by its extension."
 keywords = ["mime", "filesystem", "extension"]
 repository = "https://github.com/cybergeek94/mime_guess"
+documentation = "https://cybergeek94.github.io/mime_guess/doc/mime_guess/index.html"
 
 build = "src/gen_mime_types.rs"
 
