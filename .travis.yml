@@ -7,9 +7,9 @@ os:
   - linux
   - osx
 script:
-  - cargo build -v --features all
-  - cargo test -v --features all
-  - cargo doc -v --no-deps --features all
+  - cargo build -v 
+  - cargo test -v
+  - cargo doc -v --no-deps
 after_success:
     - |
         test ${TRAVIS_PULL_REQUEST} == "false" && \
