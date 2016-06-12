@@ -95,24 +95,36 @@ pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     map_lookup(&MIME_TYPES, search_ext).cloned()
 }
 
-/// Get a list of known extensions for a given `Mime` type. Ignores parameters 
-/// (only searches with `<main type>/<subtype>`). Case-insensitive (for extension types).
-
+/// Get a list of known extensions for a given `Mime`. 
 ///
-/// Returns `None` if the MIME is unknown. 
+/// Ignores parameters (only searches with `<main type>/<subtype>`). Case-insensitive (for extension types).
+///
+/// Returns `None` if the MIME type is unknown. 
+///
+/// ###Wildcards
+/// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
+///
+/// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
 pub fn get_mime_extensions(mime: &Mime) -> Option<&'static [&'static str]> {    
     get_extensions(&mime.0, &mime.1)
 }
 
-/// Get a list of known extensions for a MIME type. Ignores parameters (only searches
-/// `<main type>/<subtype>`). Case-insensitive.
-
+/// Get a list of known extensions for a MIME type string. 
 ///
-/// Returns `None` if the mime is unknown.
+/// Ignores parameters (only searches `<main type>/<subtype>`). Case-insensitive.
+///
+/// Returns `None` if the MIME type is unknown.
+/// 
+/// ###Wildcards
+/// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
+///
+/// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
 ///
 /// ###Panics
-/// If `mime_str` is not a valid MIME type specifier.
+/// If `mime_str` is not a valid MIME type specifier (naive).
 pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static str]> {
+    mime_str = mime_str.trim();
+
     if let Some(sep_idx) = mime_str.find(';') {
         mime_str = &mime_str[..sep_idx];
     }
@@ -130,10 +142,10 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
 ///
 /// Returns `None` if `toplevel` or `sublevel` are unknown.
 ///
-/// ##Wildcards
-/// If `toplevel == "*"` (`*/*`), returns all extensions.
+/// ###Wildcards
+/// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
 ///
-/// Else if `sublevel == "*"` (`{toplevel}/*`), returns all extensions for `toplevel`.
+/// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
 pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
     if toplevel == "*" {
         return Some(EXTS);
