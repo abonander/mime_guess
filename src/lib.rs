@@ -7,13 +7,22 @@ extern crate mime;
 extern crate phf;
 extern crate unicase;
 
-use mime::Mime;
+use mime::{Mime, TopLevel, SubLevel};
 use unicase::UniCase;
 
 use std::ffi::OsStr;
 use std::path::Path;
 
 include!("mime_types_generated.rs");
+
+macro_rules! try_opt(
+    ($expr:expr) => (
+        match $expr {
+            Some(val) => val,
+            None => return None,
+        }
+    )
+);
 
 #[cfg(test)]
 #[path = "mime_types.rs"]
@@ -37,7 +46,7 @@ pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
 /// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
 ///
 /// If `path` has no extension, or its extension has no known MIME type mapping,
-/// then `None` returned.
+/// then `None` is returned.
 ///
 /// ##Note
 /// **Guess** is the operative word here, as there are no guarantees that the contents of the file
@@ -77,18 +86,48 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     if search_ext.is_empty() { return None; }
 
+    map_lookup_unicase(&MIME_TYPES, search_ext).cloned()
+}
+
+/// Get a list of known extensions for a given `Mime` type. Ignores parameters 
+/// (only searches with `<main type>/<subtype>`). Case-insensitive (for extension types).
+
+///
+/// Returns `None` if the mime is unknown. 
+pub fn get_extensions(mime: &Mime) -> Option<&'static [&'static str]> {
+    let no_param_mime = format!("{}/{}", mime.0, mime.1);
+    get_extensions_str(&no_param_mime);
+}
+
+/// Get a list of known extensions for a mime type. Ignores parameters (only searches
+/// `<main type>/<subtype>`). Case-insensitive.
+
+///
+/// Returns `None` if the mime is unknown. 
+pub fn get_extensions_str(mut mime_str: &str) -> Option<&'static [&'static str]> {
+    if let Some(sep_idx) = mime_str.find(';') {
+        mime_str = &mime_str[..sep_idx];
+    }
+
+    // Need to map &&'static [..] to &'static [..] inside the Option
+    map_lookup_unicase(&REV_MAPPINGS, mime_str).map(|&exts| exts)
+}
+
+/// Get the MIME type for `application/octet-stream` (generic binary stream)
+pub fn octet_stream() -> Mime {
+    // FIXME: use new representation when https://github.com/hyperium/mime.rs/pull/42
+    // is merged.
+    Mime(TopLevel::Application, SubLevel::Ext("octet-stream".into()), Vec::new())
+}
+
+fn map_lookup_unicase<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str) -> Option<&'map V> {
     // This transmute should be safe as `get` will not store the reference with
     // the expanded lifetime. This is due to `Borrow` being overly strict and
     // can't have an impl for `&'static str` to `Borrow<&'a str>`.
     //
     // See https://github.com/rust-lang/rust/issues/28853#issuecomment-158735548
-    let search_ext = unsafe { ::std::mem::transmute::<&str, &'static str>(search_ext) };
-    MIME_TYPES.get(&UniCase(search_ext)).cloned()
-}
-
-/// Get the MIME type for `application/octet-stream` (generic binary stream)
-pub fn octet_stream() -> Mime {
-    "application/octet-stream".parse().unwrap()
+    let key = unsafe { ::std::mem::transmute::<_, &'static str>(key) };
+    map.get(&UniCase(key))
 }
 
 #[cfg(test)]
