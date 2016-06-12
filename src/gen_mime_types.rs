@@ -2,7 +2,6 @@ extern crate phf_codegen;
 extern crate unicase;
 
 use phf_codegen::Map as PhfMap;
-use phf_codegen::OrderedMap as PhfOrderedMap;
 
 use unicase::UniCase;
 
@@ -26,8 +25,6 @@ fn main() {
 
     build_rev_map(&mut outfile);
 }
-
-
 
 // Build forward mappings (ext -> mime type)
 fn build_forward_map<W: Write>(out: &mut W) {
