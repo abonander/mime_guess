@@ -15,7 +15,13 @@ use std::path::Path;
 
 include!("mime_types_generated.rs");
 
-macro_rules! try_opt(
+struct TopLevelExts { 
+    start: usize,
+    end: usize,
+    subs: phf::Map<UniCase<&'static str>, (usize, usize)>,
+}
+
+macro_rules! try_opt (
     ($expr:expr) => (
         match $expr {
             Some(val) => val,
@@ -86,31 +92,73 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     if search_ext.is_empty() { return None; }
 
-    map_lookup_unicase(&MIME_TYPES, search_ext).cloned()
+    map_lookup(&MIME_TYPES, search_ext).cloned()
 }
 
-/// Get a list of known extensions for a given `Mime` type. Ignores parameters 
-/// (only searches with `<main type>/<subtype>`). Case-insensitive (for extension types).
-
+/// Get a list of known extensions for a given `Mime`. 
 ///
-/// Returns `None` if the mime is unknown. 
-pub fn get_extensions(mime: &Mime) -> Option<&'static [&'static str]> {
-    let no_param_mime = format!("{}/{}", mime.0, mime.1);
-    get_extensions_str(&no_param_mime)
+/// Ignores parameters (only searches with `<main type>/<subtype>`). Case-insensitive (for extension types).
+///
+/// Returns `None` if the MIME type is unknown. 
+///
+/// ###Wildcards
+/// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
+///
+/// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
+pub fn get_mime_extensions(mime: &Mime) -> Option<&'static [&'static str]> {    
+    get_extensions(&mime.0, &mime.1)
 }
 
-/// Get a list of known extensions for a mime type. Ignores parameters (only searches
-/// `<main type>/<subtype>`). Case-insensitive.
-
+/// Get a list of known extensions for a MIME type string. 
 ///
-/// Returns `None` if the mime is unknown. 
-pub fn get_extensions_str(mut mime_str: &str) -> Option<&'static [&'static str]> {
+/// Ignores parameters (only searches `<main type>/<subtype>`). Case-insensitive.
+///
+/// Returns `None` if the MIME type is unknown.
+/// 
+/// ###Wildcards
+/// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
+///
+/// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
+///
+/// ###Panics
+/// If `mime_str` is not a valid MIME type specifier (naive).
+pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static str]> {
+    mime_str = mime_str.trim();
+
     if let Some(sep_idx) = mime_str.find(';') {
         mime_str = &mime_str[..sep_idx];
     }
 
-    // Need to map &&'static [..] to &'static [..] inside the Option
-    map_lookup_unicase(&REV_MAPPINGS, mime_str).map(|&exts| exts)
+    let (top, sub) = {
+        let split_idx = mime_str.find('/').unwrap();
+        mime_str.split_at(split_idx)
+    };
+
+    get_extensions(top, sub)
+}
+
+/// Get the extensions for a given top-level and sub-level of a MIME type
+/// (`{toplevel}/{sublevel}`).
+///
+/// Returns `None` if `toplevel` or `sublevel` are unknown.
+///
+/// ###Wildcards
+/// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
+///
+/// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
+pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
+    if toplevel == "*" {
+        return Some(EXTS);
+    } 
+    
+    let top = try_opt!(map_lookup(&REV_MAPPINGS, toplevel));
+
+    if sublevel == "*" {
+        return Some(&EXTS[top.start .. top.end]);
+    } 
+    
+    let sub = try_opt!(map_lookup(&top.subs, sublevel));
+    Some(&EXTS[sub.0 .. sub.1])
 }
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
@@ -118,7 +166,7 @@ pub fn octet_stream() -> Mime {
     "application/octet-stream".parse().unwrap()    
 }
 
-fn map_lookup_unicase<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str) -> Option<&'map V> {
+fn map_lookup<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str) -> Option<&'map V> {
     // This transmute should be safe as `get` will not store the reference with
     // the expanded lifetime. This is due to `Borrow` being overly strict and
     // can't have an impl for `&'static str` to `Borrow<&'a str>`.
