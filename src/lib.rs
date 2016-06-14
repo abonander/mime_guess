@@ -131,7 +131,7 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
 
     let (top, sub) = {
         let split_idx = mime_str.find('/').unwrap();
-        mime_str.split_at(split_idx)
+        (&mime_str[..split_idx], &mime_str[split_idx + 1 ..])
     };
 
     get_extensions(top, sub)

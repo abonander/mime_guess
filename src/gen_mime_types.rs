@@ -95,6 +95,6 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
 fn split_mime(mime: &str) -> (&str, &str) {
     let split_idx = mime.find('/').unwrap();
-    mime.split_at(split_idx)
+    (&mime[..split_idx], &mime[split_idx + 1 ..])
 }
 
