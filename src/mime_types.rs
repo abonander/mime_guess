@@ -258,6 +258,8 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
     ("midi", "audio/mid"),
     ("mix", "application/octet-stream"),
     ("mk", "text/plain"),
+    ("mka", "audio/x-matroska"),
+    ("mkv", "video/x-matroska"),
     ("mmf", "application/x-smaf"),
     ("mno", "text/xml"),
     ("mny", "application/x-msmoney"),
