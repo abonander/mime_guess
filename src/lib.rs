@@ -115,9 +115,7 @@ pub fn get_extensions_str(mut mime_str: &str) -> Option<&'static [&'static str]>
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
 pub fn octet_stream() -> Mime {
-    // FIXME: use new representation when https://github.com/hyperium/mime.rs/pull/42
-    // is merged.
-    Mime(TopLevel::Application, SubLevel::Ext("octet-stream".into()), Vec::new())
+    "application/octet-stream".parse().unwrap()    
 }
 
 fn map_lookup_unicase<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str) -> Option<&'map V> {
