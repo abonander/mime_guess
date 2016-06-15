@@ -2,6 +2,8 @@
 
 MIME/MediaType guessing by file extension. Uses a [compile-time](https://crates.io/crates/phf_codegen) [perfect hash map](https://crates.io/crates/phf) of known file extension -> MIME type mappings.
 
+####[Documentation](https://cybergeek94.github.io/mime_guess/doc/mime_guess/index.html)
+
 Contributing
 -----------
 
