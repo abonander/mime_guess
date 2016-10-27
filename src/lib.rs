@@ -7,7 +7,7 @@ extern crate mime;
 extern crate phf;
 extern crate unicase;
 
-use mime::Mime;
+pub use mime::Mime;
 use unicase::UniCase;
 
 use std::ffi::OsStr;
