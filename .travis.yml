@@ -1,4 +1,6 @@
 language: rust
+sudo: false
+cache: cargo
 rust:
   - stable
   - beta
@@ -6,13 +8,3 @@ rust:
 os:
   - linux
   - osx
-script:
-  - cargo build -v 
-  - cargo test -v
-  - cargo doc -v --no-deps
-after_success:
-    - |
-        test ${TRAVIS_PULL_REQUEST} == "false" && \
-        test "${TRAVIS_BUILD_NUMBER}.1" == "${TRAVIS_JOB_NUMBER}" && \
-        test -n ${TRAVIS_TAG} && \
-        bash deploy-docs.sh

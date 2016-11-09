@@ -1,8 +1,8 @@
-# mime_guess [![Build Status](https://travis-ci.org/cybergeek94/mime_guess.svg?branch=master)](https://travis-ci.org/cybergeek94/mime_guess) [![Crates.io](https://img.shields.io/crates/v/mime_guess.svg)](https://crates.io/crates/mime_guess)
+# mime_guess [![Build Status](https://travis-ci.org/abonander/mime_guess.svg?branch=master)](https://travis-ci.org/abonander/mime_guess) [![Crates.io](https://img.shields.io/crates/v/mime_guess.svg)](https://crates.io/crates/mime_guess)
 
 MIME/MediaType guessing by file extension. Uses a [compile-time](https://crates.io/crates/phf_codegen) [perfect hash map](https://crates.io/crates/phf) of known file extension -> MIME type mappings.
 
-####[Documentation](https://cybergeek94.github.io/mime_guess/doc/mime_guess/index.html)
+####[Documentation](https://docs.rs/mime_guess/)
 
 Contributing
 -----------
