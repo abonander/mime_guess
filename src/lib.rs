@@ -39,7 +39,7 @@ mod mime_types_src;
 /// If `path` has no extension, or its extension has no known MIME type mapping,
 /// then the MIME type is assumed to be `application/octet-stream`.
 ///
-/// ##Note
+/// ## Note
 /// **Guess** is the operative word here, as there are no guarantees that the contents of the file
 /// that `path` points to match the MIME type associated with the path's extension.
 ///
@@ -54,7 +54,7 @@ pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
 /// If `path` has no extension, or its extension has no known MIME type mapping,
 /// then `None` is returned.
 ///
-/// ##Note
+/// ## Note
 /// **Guess** is the operative word here, as there are no guarantees that the contents of the file
 /// that `path` points to match the MIME type associated with the path's extension.
 ///
@@ -101,7 +101,7 @@ pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
 ///
 /// Returns `None` if the MIME type is unknown. 
 ///
-/// ###Wildcards
+/// ### Wildcards
 /// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
 ///
 /// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
@@ -115,12 +115,12 @@ pub fn get_mime_extensions(mime: &Mime) -> Option<&'static [&'static str]> {
 ///
 /// Returns `None` if the MIME type is unknown.
 /// 
-/// ###Wildcards
+/// ### Wildcards
 /// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
 ///
 /// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
 ///
-/// ###Panics
+/// ### Panics
 /// If `mime_str` is not a valid MIME type specifier (naive).
 pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static str]> {
     mime_str = mime_str.trim();
@@ -142,7 +142,7 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
 ///
 /// Returns `None` if `toplevel` or `sublevel` are unknown.
 ///
-/// ###Wildcards
+/// ### Wildcards
 /// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
 ///
 /// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
