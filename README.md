@@ -4,6 +4,9 @@ MIME/MediaType guessing by file extension. Uses a [compile-time](https://crates.
 
 #### [Documentation](https://docs.rs/mime_guess/)
 
+**NOTE**: this crate will remain in `2.0.0-alpha.x` until `mime` stabilizes. Backwards-compatible changes will
+be backported to the `1.x-maint` branch but upgrades to `mime` will constitute an alpha version bump.
+
 Contributing
 -----------
 
