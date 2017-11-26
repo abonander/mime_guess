@@ -536,6 +536,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
     ("vsw", "application/vnd.visio"),
     ("vsx", "application/vnd.visio"),
     ("vtx", "application/vnd.visio"),
+    ("wasm", "application/wasm"),
     ("wav", "audio/wav"),
     ("wave", "audio/wav"),
     ("wax", "audio/x-ms-wax"),
