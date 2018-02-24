@@ -13,9 +13,9 @@ use unicase::UniCase;
 use std::ffi::OsStr;
 use std::path::Path;
 
-include!("mime_types_generated.rs");
+include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
 
-struct TopLevelExts { 
+struct TopLevelExts {
     start: usize,
     end: usize,
     subs: phf::Map<UniCase<&'static str>, (usize, usize)>,
@@ -95,26 +95,26 @@ pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     map_lookup(&MIME_TYPES, search_ext).cloned()
 }
 
-/// Get a list of known extensions for a given `Mime`. 
+/// Get a list of known extensions for a given `Mime`.
 ///
 /// Ignores parameters (only searches with `<main type>/<subtype>`). Case-insensitive (for extension types).
 ///
-/// Returns `None` if the MIME type is unknown. 
+/// Returns `None` if the MIME type is unknown.
 ///
 /// ### Wildcards
 /// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
 ///
 /// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
-pub fn get_mime_extensions(mime: &Mime) -> Option<&'static [&'static str]> {    
+pub fn get_mime_extensions(mime: &Mime) -> Option<&'static [&'static str]> {
     get_extensions(mime.type_().as_ref(), mime.subtype().as_ref())
 }
 
-/// Get a list of known extensions for a MIME type string. 
+/// Get a list of known extensions for a MIME type string.
 ///
 /// Ignores parameters (only searches `<main type>/<subtype>`). Case-insensitive.
 ///
 /// Returns `None` if the MIME type is unknown.
-/// 
+///
 /// ### Wildcards
 /// If the top-level of the MIME type is a wildcard (`*`), returns all extensions.
 ///
@@ -149,21 +149,21 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
 pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
     if toplevel == "*" {
         return Some(EXTS);
-    } 
-    
+    }
+
     let top = try_opt!(map_lookup(&REV_MAPPINGS, toplevel));
 
     if sublevel == "*" {
         return Some(&EXTS[top.start .. top.end]);
-    } 
-    
+    }
+
     let sub = try_opt!(map_lookup(&top.subs, sublevel));
     Some(&EXTS[sub.0 .. sub.1])
 }
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
 pub fn octet_stream() -> Mime {
-    "application/octet-stream".parse().unwrap()    
+    "application/octet-stream".parse().unwrap()
 }
 
 fn map_lookup<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str) -> Option<&'map V> {
