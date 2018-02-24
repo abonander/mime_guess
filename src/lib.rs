@@ -13,9 +13,9 @@ use unicase::UniCase;
 use std::ffi::OsStr;
 use std::path::Path;
 
-include!("mime_types_generated.rs");
+include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
 
-struct TopLevelExts { 
+struct TopLevelExts {
     start: usize,
     end: usize,
     subs: phf::Map<UniCase<&'static str>, (usize, usize)>,

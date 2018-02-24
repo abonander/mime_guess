@@ -9,8 +9,6 @@ keywords = ["mime", "filesystem", "extension"]
 repository = "https://github.com/abonander/mime_guess"
 documentation = "https://docs.rs/mime_guess/"
 
-build = "src/gen_mime_types.rs"
-
 [features]
 bench = []
 
