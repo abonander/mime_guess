@@ -8,18 +8,20 @@ use unicase::UniCase;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
+use std::path::Path;
+use std::env;
 
 use std::collections::BTreeMap;
 
 use mime_types::MIME_TYPES;
 
-const GENERATED_FILE: &'static str = "src/mime_types_generated.rs";
-
+#[path="src/mime_types.rs"]
 mod mime_types;
 
 fn main() {
-   
-    let mut outfile = BufWriter::new(File::create(GENERATED_FILE).unwrap());
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let dest_path = Path::new(&out_dir).join("mime_types_generated.rs");
+    let mut outfile = BufWriter::new(File::create(dest_path).unwrap());
 
     build_forward_map(&mut outfile);
 
@@ -54,7 +56,7 @@ fn build_rev_map<W: Write>(out: &mut W) {
             .or_insert_with(Vec::new)
             .push(key);
     }
-    
+
     write!(out, "static REV_MAPPINGS: phf::Map<UniCase<&'static str>, TopLevelExts> = ").unwrap();
 
     let mut rev_map = PhfMap::new();
@@ -65,13 +67,13 @@ fn build_rev_map<W: Write>(out: &mut W) {
         let top_start = exts.len();
 
         let mut sub_map = PhfMap::new();
-        
+
         for(sub, sub_exts) in subs {
             let sub_start = exts.len();
             exts.extend(sub_exts);
             let sub_end = exts.len();
 
-            sub_map.entry(sub, &format!("({}, {})", sub_start, sub_end));                       
+            sub_map.entry(sub, &format!("({}, {})", sub_start, sub_end));
         }
 
         let top_end = exts.len();
@@ -80,9 +82,9 @@ fn build_rev_map<W: Write>(out: &mut W) {
         sub_map.build(&mut subs_bytes).unwrap();
 
         let subs_str = ::std::str::from_utf8(&subs_bytes).unwrap();
-        
+
         rev_map.entry(
-            top, 
+            top,
             &format!("TopLevelExts {{ start: {}, end: {}, subs: {} }}", top_start, top_end, subs_str)
         );
     }
@@ -97,4 +99,3 @@ fn split_mime(mime: &str) -> (&str, &str) {
     let split_idx = mime.find('/').unwrap();
     (&mime[..split_idx], &mime[split_idx + 1 ..])
 }
-
