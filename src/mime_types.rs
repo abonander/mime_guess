@@ -393,6 +393,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
     ("pst", "application/vnd.ms-outlook"),
     ("pub", "application/x-mspublisher"),
     ("pwz", "application/vnd.ms-powerpoint"),
+    ("py", "text/plain"),
     ("qht", "text/x-html-insertion"),
     ("qhtm", "text/x-html-insertion"),
     ("qt", "video/quicktime"),
