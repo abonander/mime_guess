@@ -163,6 +163,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
     ("h", "text/plain"),
     ("hdf", "application/x-hdf"),
     ("hdml", "text/x-hdml"),
+    ("hh", "text/plain"),
     ("hhc", "application/x-oleobject"),
     ("hhk", "application/octet-stream"),
     ("hhp", "application/octet-stream"),
