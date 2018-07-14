@@ -4,7 +4,7 @@ MIME/MediaType guessing by file extension. Uses a [compile-time](https://crates.
 
 #### [Documentation](https://docs.rs/mime_guess/)
 
-**NOTE**: this crate will remain in `2.0.0-alpha.x` until `mime` stabilizes. Backwards-compatible changes will
+**NOTE**: this crate will remain in `2.0.0-alpha.x` until `mime` stabilizes (releases 1.0, [discussion here](https://github.com/hyperium/mime/issues/52)). Backwards-compatible changes will
 be backported to the `1.x-maint` branch but upgrades to `mime` will constitute an alpha version bump.
 
 #### Note: MIME Types Returned Are Not Stable/Guaranteed
