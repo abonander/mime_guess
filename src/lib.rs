@@ -53,6 +53,11 @@ mod mime_types_src;
 /// that `path` points to match the MIME type associated with the path's extension.
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
+///
+/// In HTTP applications, it might be [preferable][rfc7231] to not send a `Content-Type`
+/// header at all instead of defaulting to `application/content-stream`.
+///
+/// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
     guess_mime_type_opt(path)
         .unwrap_or_else(octet_stream)
@@ -69,15 +74,36 @@ pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
 pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
+    mime_str_for_path_ext(path)
+        .map(|mime| mime.parse::<Mime>().unwrap())
+}
+
+/// Guess the MIME type string of `path` by its extension (as defined by `Path::extension()`).
+///
+/// If `path` has no extension, or its extension has no known MIME type mapping,
+/// then `None` is returned.
+///
+/// ## Note
+/// **Guess** is the operative word here, as there are no guarantees that the contents of the file
+/// that `path` points to match the MIME type associated with the path's extension.
+///
+/// Take care when processing files with assumptions based on the return value of this function.
+pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
     let ext = path.as_ref().extension().and_then(OsStr::to_str).unwrap_or("");
 
-    get_mime_type_opt(ext)
+    get_mime_type_str(ext)
 }
 
 /// Get the MIME type associated with a file extension.
 ///
 /// If there is no association for the extension, or `ext` is empty,
 /// `application/octet-stream` is returned.
+///
+/// ## Note
+/// In HTTP applications, it might be [preferable][rfc7231] to not send a `Content-Type`
+/// header at all instead of defaulting to `application/content-stream`.
+///
+/// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 pub fn get_mime_type(search_ext: &str) -> Mime {
     get_mime_type_opt(search_ext)
         .unwrap_or_else(octet_stream)
