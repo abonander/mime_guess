@@ -16,7 +16,7 @@ extern crate mime;
 extern crate phf;
 extern crate unicase;
 
-pub use mime::Mime;
+pub use mime::*;
 use unicase::UniCase;
 
 use std::ffi::OsStr;
@@ -214,7 +214,6 @@ fn map_lookup<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str)
 #[cfg(test)]
 mod tests {
     use mime::Mime;
-    use std::ascii::AsciiExt;
     use std::path::Path;
     use super::{get_mime_type, guess_mime_type, MIME_TYPES};
     use super::{get_mime_type_opt, guess_mime_type_opt};
