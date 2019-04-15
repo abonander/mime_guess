@@ -408,6 +408,7 @@ pub static MIME_TYPES: &'static [(&'static str, &'static str)] = &[
     ("hdd", "application/x-virtualbox-hdd"),
     ("hdf", "application/x-hdf"),
     ("hdml", "text/x-hdml"),
+    ("hdr", "image/vnd.radiance"),
     ("hh", "text/plain"),
     ("hhc", "application/x-oleobject"),
     ("hhk", "application/octet-stream"),
