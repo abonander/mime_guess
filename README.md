@@ -4,9 +4,21 @@ MIME/MediaType guessing by file extension. Uses a [compile-time](https://crates.
 
 #### [Documentation](https://docs.rs/mime_guess/)
 
+### Versioning
+
+Due to a mistaken premature release, `mime_guess` currently publicly depends on a pre-1.0 `mime`,
+which means `mime` upgrades are breaking changes and necessitates a major version bump. 
+Refer to the following table to find a version of `mime_guess` which matches your version of `mime`:
+
+| `mime` version | `mime_guess` version |
+|----------------|----------------------|
+| `0.1.x, 0.2.x` | `1.x.y` |
+| `0.3.x`        | `2.x.y` |
+
 #### Note: MIME Types Returned Are Not Stable/Guaranteed
 The media types returned for a given extension are not considered to be part of the crate's
- stable API and are often updated in patch (#.#.x) releases to be as correct as possible.
+ stable API and are often updated in patch (`x.y.z + 1`) releases to be as correct as possible. MIME
+ changes are backported to previous major releases on a best-effort basis.
  
 Additionally, only the extensions of paths/filenames are inspected in order to guess the MIME type. The
 file that may or may not reside at that path may or may not be a valid file of the returned MIME type.
