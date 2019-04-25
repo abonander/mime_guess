@@ -59,8 +59,7 @@ mod mime_types_src;
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
-    guess_mime_type_opt(path)
-        .unwrap_or_else(octet_stream)
+    guess_mime_type_opt(path).unwrap_or_else(octet_stream)
 }
 
 /// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
@@ -74,8 +73,7 @@ pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
 pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
-    mime_str_for_path_ext(path)
-        .map(|mime| mime.parse::<Mime>().unwrap())
+    mime_str_for_path_ext(path).map(|mime| mime.parse::<Mime>().unwrap())
 }
 
 /// Guess the MIME type string of `path` by its extension (as defined by `Path::extension()`).
@@ -89,7 +87,11 @@ pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
 pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
-    let ext = path.as_ref().extension().and_then(OsStr::to_str).unwrap_or("");
+    let ext = path
+        .as_ref()
+        .extension()
+        .and_then(OsStr::to_str)
+        .unwrap_or("");
 
     get_mime_type_str(ext)
 }
@@ -105,8 +107,7 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 pub fn get_mime_type(search_ext: &str) -> Mime {
-    get_mime_type_opt(search_ext)
-        .unwrap_or_else(octet_stream)
+    get_mime_type_opt(search_ext).unwrap_or_else(octet_stream)
 }
 
 /// Get the MIME type associated with a file extension.
@@ -114,8 +115,7 @@ pub fn get_mime_type(search_ext: &str) -> Mime {
 /// If there is no association for the extension, or `ext` is empty,
 /// `None` is returned.
 pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
-    get_mime_type_str(search_ext)
-        .map(|mime| mime.parse::<Mime>().unwrap())
+    get_mime_type_str(search_ext).map(|mime| mime.parse::<Mime>().unwrap())
 }
 
 /// Get the MIME type string associated with a file extension. Case-insensitive.
@@ -125,7 +125,9 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 ///
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
-    if search_ext.is_empty() { return None; }
+    if search_ext.is_empty() {
+        return None;
+    }
 
     map_lookup(&MIME_TYPES, search_ext).cloned()
 }
@@ -166,7 +168,7 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
 
     let (top, sub) = {
         let split_idx = mime_str.find('/').unwrap();
-        (&mime_str[..split_idx], &mime_str[split_idx + 1 ..])
+        (&mime_str[..split_idx], &mime_str[split_idx + 1..])
     };
 
     get_extensions(top, sub)
@@ -189,11 +191,11 @@ pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'stat
     let top = try_opt!(map_lookup(&REV_MAPPINGS, toplevel));
 
     if sublevel == "*" {
-        return Some(&EXTS[top.start .. top.end]);
+        return Some(&EXTS[top.start..top.end]);
     }
 
     let sub = try_opt!(map_lookup(&top.subs, sublevel));
-    Some(&EXTS[sub.0 .. sub.1])
+    Some(&EXTS[sub.0..sub.1])
 }
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
@@ -201,7 +203,10 @@ pub fn octet_stream() -> Mime {
     "application/octet-stream".parse().unwrap()
 }
 
-fn map_lookup<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str) -> Option<&'map V> {
+fn map_lookup<'map, V>(
+    map: &'map phf::Map<UniCase<&'static str>, V>,
+    key: &str,
+) -> Option<&'map V> {
     // This transmute should be safe as `get` will not store the reference with
     // the expanded lifetime. This is due to `Borrow` being overly strict and
     // can't have an impl for `&'static str` to `Borrow<&'a str>`.
@@ -213,29 +218,49 @@ fn map_lookup<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str)
 
 #[cfg(test)]
 mod tests {
+    use super::{get_mime_type, guess_mime_type, MIME_TYPES};
+    use super::{get_mime_type_opt, guess_mime_type_opt};
     use mime::Mime;
     use std::ascii::AsciiExt;
     use std::path::Path;
-    use super::{get_mime_type, guess_mime_type, MIME_TYPES};
-    use super::{get_mime_type_opt, guess_mime_type_opt};
 
     #[test]
     fn test_mime_type_guessing() {
         assert_eq!(get_mime_type("gif").to_string(), "image/gif".to_string());
         assert_eq!(get_mime_type("TXT").to_string(), "text/plain".to_string());
-        assert_eq!(get_mime_type("blahblah").to_string(), "application/octet-stream".to_string());
+        assert_eq!(
+            get_mime_type("blahblah").to_string(),
+            "application/octet-stream".to_string()
+        );
 
-        assert_eq!(guess_mime_type(Path::new("/path/to/file.gif")).to_string(), "image/gif".to_string());
-        assert_eq!(guess_mime_type("/path/to/file.gif").to_string(), "image/gif".to_string());
+        assert_eq!(
+            guess_mime_type(Path::new("/path/to/file.gif")).to_string(),
+            "image/gif".to_string()
+        );
+        assert_eq!(
+            guess_mime_type("/path/to/file.gif").to_string(),
+            "image/gif".to_string()
+        );
     }
 
     #[test]
     fn test_mime_type_guessing_opt() {
-        assert_eq!(get_mime_type_opt("gif").unwrap().to_string(), "image/gif".to_string());
-        assert_eq!(get_mime_type_opt("TXT").unwrap().to_string(), "text/plain".to_string());
+        assert_eq!(
+            get_mime_type_opt("gif").unwrap().to_string(),
+            "image/gif".to_string()
+        );
+        assert_eq!(
+            get_mime_type_opt("TXT").unwrap().to_string(),
+            "text/plain".to_string()
+        );
         assert_eq!(get_mime_type_opt("blahblah"), None);
 
-        assert_eq!(guess_mime_type_opt("/path/to/file.gif").unwrap().to_string(), "image/gif".to_string());
+        assert_eq!(
+            guess_mime_type_opt("/path/to/file.gif")
+                .unwrap()
+                .to_string(),
+            "image/gif".to_string()
+        );
         assert_eq!(guess_mime_type_opt("/path/to/file"), None);
     }
 
@@ -263,7 +288,8 @@ mod tests {
                 ext <= n_ext,
                 "Extensions in src/mime_types should be sorted alphabetically
                 in ascending order. Failed assert: {:?} <= {:?}",
-                ext, n_ext
+                ext,
+                n_ext
             );
         }
     }
@@ -290,7 +316,10 @@ mod bench {
 
     #[bench]
     fn bench_mime_str_uppercase(b: &mut Bencher) {
-        let uppercased : Vec<_> = MIME_TYPES.into_iter().map(|(s, _)| s.to_uppercase()).collect();
+        let uppercased: Vec<_> = MIME_TYPES
+            .into_iter()
+            .map(|(s, _)| s.to_uppercase())
+            .collect();
 
         for mime_ext in &uppercased {
             b.iter(|| {

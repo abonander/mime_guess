@@ -5,17 +5,17 @@ use phf_codegen::Map as PhfMap;
 
 use unicase::UniCase;
 
+use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
 use std::path::Path;
-use std::env;
 
 use std::collections::BTreeMap;
 
 use mime_types::MIME_TYPES;
 
-#[path="src/mime_types.rs"]
+#[path = "src/mime_types.rs"]
 mod mime_types;
 
 fn main() {
@@ -30,7 +30,11 @@ fn main() {
 
 // Build forward mappings (ext -> mime type)
 fn build_forward_map<W: Write>(out: &mut W) {
-    write!(out, "static MIME_TYPES: phf::Map<UniCase<&'static str>, &'static str> = ").unwrap();
+    write!(
+        out,
+        "static MIME_TYPES: phf::Map<UniCase<&'static str>, &'static str> = "
+    )
+    .unwrap();
     let mut forward_map = PhfMap::new();
 
     for &(key, val) in MIME_TYPES {
@@ -42,7 +46,6 @@ fn build_forward_map<W: Write>(out: &mut W) {
     writeln!(out, ";").unwrap();
 }
 
-
 // Build reverse mappings (mime type -> ext)
 fn build_rev_map<W: Write>(out: &mut W) {
     // First, collect all the mime type -> ext mappings)
@@ -50,14 +53,19 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
     for &(key, val) in MIME_TYPES {
         let (top, sub) = split_mime(val);
-        dyn_map.entry(UniCase(top))
+        dyn_map
+            .entry(UniCase(top))
             .or_insert_with(BTreeMap::new)
             .entry(UniCase(sub))
             .or_insert_with(Vec::new)
             .push(key);
     }
 
-    write!(out, "static REV_MAPPINGS: phf::Map<UniCase<&'static str>, TopLevelExts> = ").unwrap();
+    write!(
+        out,
+        "static REV_MAPPINGS: phf::Map<UniCase<&'static str>, TopLevelExts> = "
+    )
+    .unwrap();
 
     let mut rev_map = PhfMap::new();
 
@@ -68,7 +76,7 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
         let mut sub_map = PhfMap::new();
 
-        for(sub, sub_exts) in subs {
+        for (sub, sub_exts) in subs {
             let sub_start = exts.len();
             exts.extend(sub_exts);
             let sub_end = exts.len();
@@ -85,7 +93,10 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
         rev_map.entry(
             top,
-            &format!("TopLevelExts {{ start: {}, end: {}, subs: {} }}", top_start, top_end, subs_str)
+            &format!(
+                "TopLevelExts {{ start: {}, end: {}, subs: {} }}",
+                top_start, top_end, subs_str
+            ),
         );
     }
 
@@ -97,5 +108,5 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
 fn split_mime(mime: &str) -> (&str, &str) {
     let split_idx = mime.find('/').unwrap();
-    (&mime[..split_idx], &mime[split_idx + 1 ..])
+    (&mime[..split_idx], &mime[split_idx + 1..])
 }
