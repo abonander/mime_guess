@@ -188,6 +188,7 @@ fn map_lookup<'map, V>(map: &'map phf::Map<UniCase<&'static str>, V>, key: &str)
 #[cfg(test)]
 mod tests {
     use mime::Mime;
+    #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
     use std::path::Path;
     use super::{get_mime_type, guess_mime_type, MIME_TYPES};
