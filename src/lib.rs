@@ -221,6 +221,7 @@ mod tests {
     use super::{get_mime_type, guess_mime_type, MIME_TYPES};
     use super::{get_mime_type_opt, guess_mime_type_opt};
     use mime::Mime;
+    #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
     use std::path::Path;
 
