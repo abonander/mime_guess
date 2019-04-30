@@ -1,9 +1,11 @@
 // Probably not exhaustive; keep updated.
-// Needs to be sorted by extension, and extensions need to be lowercase
-// for the binary search to work!
 /// A mapping of known file extensions and their MIME types.
 ///
-/// Sorted by file extension to facilitate binary search.
+/// Required to be sorted lexicographically by extension for ease of maintenance.
+///
+/// Multiple MIME types per extension are allowed but MUST be adjacent to each other; the
+/// order is arbitrary but the first should be the most prevalent by most recent RFC declaration
+/// or explicit succession of other media types.
 ///
 /// Sourced from:
 /// https://github.com/samuelneff/MimeTypeMap/blob/master/src/MimeTypes/MimeTypeMap.cs
