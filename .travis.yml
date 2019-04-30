@@ -8,3 +8,9 @@ rust:
 os:
   - linux
   - osx
+
+script:
+  - cargo build -v
+  - cargo build -v --no-default-features
+  - cargo test -v
+  - cargo test -v --no-default-features

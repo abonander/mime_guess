@@ -10,7 +10,12 @@ repository = "https://github.com/abonander/mime_guess"
 documentation = "https://docs.rs/mime_guess/"
 
 [features]
+default = ["rev-mappings"]
 bench = []
+
+# generate reverse-mappings for lookup of extensions by MIME type
+# default-on but can be turned off for smaller generated code
+rev-mappings = []
 
 [dependencies]
 mime = "0.3"
@@ -20,3 +25,7 @@ unicase = "1.1"
 [build-dependencies]
 phf_codegen = "0.7.22"
 unicase = "1.1"
+
+[[example]]
+name = "rev_map"
+required-features = ["rev-mappings"]

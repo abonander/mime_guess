@@ -25,7 +25,9 @@ fn main() {
 
     build_forward_map(&mut outfile);
 
-    build_rev_map(&mut outfile);
+    if env::var("CARGO_FEATURE_REV_MAPPINGS").is_ok() {
+        build_rev_map(&mut outfile);
+    }
 }
 
 // Build forward mappings (ext -> mime type)
