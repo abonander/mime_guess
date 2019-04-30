@@ -34,13 +34,27 @@ fn main() {
 fn build_forward_map<W: Write>(out: &mut W) {
     write!(
         out,
-        "static MIME_TYPES: phf::Map<UniCase<&'static str>, &'static str> = "
+        "static MIME_TYPES: phf::Map<UniCase<&'static str>, &'static [&'static str]> = "
     )
     .unwrap();
     let mut forward_map = PhfMap::new();
 
+    let mut map_entries: Vec<(&str, Vec<&str>)> = Vec::new();
+
     for &(key, val) in MIME_TYPES {
-        forward_map.entry(UniCase(key), &format!("{:?}", val));
+        if let Some(&mut (key_, ref mut values)) = map_entries.last_mut() {
+            // deduplicate extensions
+            if key == key_ {
+                values.push(val);
+                continue;
+            }
+        }
+
+        map_entries.push((key, vec![val]));
+    }
+
+    for (key, values) in map_entries {
+        forward_map.entry(UniCase::new(key), &format!("&{:?} as &'static [&'static str]", values));
     }
 
     forward_map.build(out).unwrap();
@@ -56,9 +70,9 @@ fn build_rev_map<W: Write>(out: &mut W) {
     for &(key, val) in MIME_TYPES {
         let (top, sub) = split_mime(val);
         dyn_map
-            .entry(UniCase(top))
+            .entry(UniCase::new(top))
             .or_insert_with(BTreeMap::new)
-            .entry(UniCase(sub))
+            .entry(UniCase::new(sub))
             .or_insert_with(Vec::new)
             .push(key);
     }
