@@ -10,10 +10,7 @@
 //! type. The file that may or may not reside at that path may or may not be a valid file of the
 //! returned MIME type.  Be wary of unsafe or un-validated assumptions about file structure or
 //! length.
-#![cfg_attr(feature = "bench", feature(test))]
-
 extern crate mime;
-extern crate phf;
 extern crate unicase;
 
 pub use mime::Mime;
@@ -24,27 +21,13 @@ use std::path::Path;
 use std::{iter, slice};
 use std::iter::FusedIterator;
 
-include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
+#[cfg(feature = "phf")]
+#[path="impl_phf.rs"]
+mod impl_;
 
-#[cfg(feature = "rev-mappings")]
-struct TopLevelExts {
-    start: usize,
-    end: usize,
-    subs: phf::Map<UniCase<&'static str>, (usize, usize)>,
-}
-
-macro_rules! try_opt (
-    ($expr:expr) => (
-        match $expr {
-            Some(val) => val,
-            None => return None,
-        }
-    )
-);
-
-#[cfg(test)]
-#[path = "mime_types.rs"]
-mod mime_types_src;
+#[cfg(not(feature = "phf"))]
+#[path="impl_bin_search.rs"]
+mod impl_;
 
 /// A "guess" of the MIME/Media Type(s) of an extension or path as one or more
 /// [`Mime`](::mime::Mime) instances.
@@ -69,8 +52,7 @@ impl MimeGuess {
     pub fn from_ext(ext: &str) -> MimeGuess {
         if ext.is_empty() { return MimeGuess(&[]) }
 
-        map_lookup(&MIME_TYPES, ext)
-            .map_or(MimeGuess(&[]), |v| MimeGuess(v))
+        impl_::get_mime_types(ext).map_or(MimeGuess(&[]), |v| MimeGuess(v))
     }
 
     /// Guess the MIME type of `path` by its extension (as defined by
@@ -102,7 +84,7 @@ impl MimeGuess {
     /// Get the first guessed Media Type as a string, if applicable.
     ///
     /// See [Note: Ordering](#note-ordering) above.
-    pub fn first_as_str(&self) -> Option<&str> {
+    pub fn first_as_str(&self) -> Option<&'static str> {
         self.0.get(0).cloned()
     }
 
@@ -213,7 +195,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
 /// header at all instead of defaulting to `application/content-stream`.
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
-#[deprecated(since = "2.1.0", note = "Use `from_path(path).or_octet_stream()` instead")]
+#[deprecated(since = "2.0.0", note = "Use `from_path(path).or_octet_stream()` instead")]
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
     from_path(path).or_octet_stream()
 }
@@ -223,7 +205,7 @@ pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
 /// If `path` has no extension, or its extension has no known MIME type mapping,
 /// then `None` is returned.
 ///
-#[deprecated(since = "2.1.0", note = "Use `from_path(path).first()` instead")]
+#[deprecated(since = "2.0.0", note = "Use `from_path(path).first()` instead")]
 pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
     from_path(path).first()
 }
@@ -238,7 +220,7 @@ pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
 /// that `path` points to match the MIME type associated with the path's extension.
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
-#[deprecated(since = "2.1.0", note = "Use `from_path(path).first_as_str()` instead")]
+#[deprecated(since = "2.0.0", note = "Use `from_path(path).first_as_str()` instead")]
 pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
     from_path(path).0.get(0).cloned()
 }
@@ -253,7 +235,7 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
 /// header at all instead of defaulting to `application/content-stream`.
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
-#[deprecated(since = "2.1.0", note = "use `from_ext(search_ext).or_octet_stream()` instead")]
+#[deprecated(since = "2.0.0", note = "use `from_ext(search_ext).or_octet_stream()` instead")]
 pub fn get_mime_type(search_ext: &str) -> Mime {
     from_ext(search_ext).or_octet_stream()
 }
@@ -262,7 +244,7 @@ pub fn get_mime_type(search_ext: &str) -> Mime {
 ///
 /// If there is no association for the extension, or `ext` is empty,
 /// `None` is returned.
-#[deprecated(since = "2.1.0", note = "use `from_ext(search_ext).first()` instead")]
+#[deprecated(since = "2.0.0", note = "use `from_ext(search_ext).first()` instead")]
 pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
     from_ext(search_ext).first()
 }
@@ -273,9 +255,9 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 /// it will be converted to lowercase to facilitate the search.
 ///
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
-#[deprecated(since = "2.1.0", note = "use `from_ext(search_ext).first_as_str()` instead")]
+#[deprecated(since = "2.0.0", note = "use `from_ext(search_ext).first_as_str()` instead")]
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
-    from_path(search_ext).0.get(0).cloned()
+    from_path(search_ext).first_as_str()
 }
 
 /// Get a list of known extensions for a given `Mime`.
@@ -333,43 +315,18 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
 /// If the sub-level of the MIME type is a wildcard, returns all extensions for the top-level.
 #[cfg(feature = "rev-mappings")]
 pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
-    if toplevel == "*" {
-        return Some(EXTS);
-    }
-
-    let top = try_opt!(map_lookup(&REV_MAPPINGS, toplevel));
-
-    if sublevel == "*" {
-        return Some(&EXTS[top.start..top.end]);
-    }
-
-    let sub = try_opt!(map_lookup(&top.subs, sublevel));
-    Some(&EXTS[sub.0..sub.1])
+    impl_::get_extensions(toplevel, sublevel)
 }
 
 /// Get the MIME type for `application/octet-stream` (generic binary stream)
-#[deprecated(since = "2.1.0", note = "use `mime::APPLICATION_OCTET_STREAM` instead")]
+#[deprecated(since = "2.0.0", note = "use `mime::APPLICATION_OCTET_STREAM` instead")]
 pub fn octet_stream() -> Mime {
     "application/octet-stream".parse().unwrap()
 }
 
-fn map_lookup<'map, V>(
-    map: &'map phf::Map<UniCase<&'static str>, V>,
-    key: &str,
-) -> Option<&'map V> {
-    // This transmute should be safe as `get` will not store the reference with
-    // the expanded lifetime. This is due to `Borrow` being overly strict and
-    // can't have an impl for `&'static str` to `Borrow<&'a str>`.
-    //
-    // See https://github.com/rust-lang/rust/issues/28853#issuecomment-158735548
-    let key = unsafe { ::std::mem::transmute::<_, &'static str>(key) };
-    map.get(&UniCase::new(key))
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{get_mime_type, guess_mime_type, MIME_TYPES};
-    use super::{get_mime_type_opt, guess_mime_type_opt};
+    use super::{from_ext, from_path, MIME_TYPES};
     use mime::Mime;
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
@@ -377,19 +334,21 @@ mod tests {
 
     #[test]
     fn test_mime_type_guessing() {
-        assert_eq!(get_mime_type("gif").to_string(), "image/gif".to_string());
-        assert_eq!(get_mime_type("TXT").to_string(), "text/plain".to_string());
+        assert_eq!(from_ext("gif").or_octet_stream().to_string(), "image/gif".to_string());
+        assert_eq!(from_ext("TXT").or_octet_stream().to_string(), "text/plain".to_string());
         assert_eq!(
-            get_mime_type("blahblah").to_string(),
+            from_ext("blahblah").or_octet_stream().to_string(),
             "application/octet-stream".to_string()
         );
 
         assert_eq!(
-            guess_mime_type(Path::new("/path/to/file.gif")).to_string(),
+            from_path(Path::new("/path/to/file.gif"))
+                .or_octet_stream().to_string(),
             "image/gif".to_string()
         );
         assert_eq!(
-            guess_mime_type("/path/to/file.gif").to_string(),
+            from_path("/path/to/file.gif")
+                .or_octet_stream().to_string(),
             "image/gif".to_string()
         );
     }
@@ -397,22 +356,22 @@ mod tests {
     #[test]
     fn test_mime_type_guessing_opt() {
         assert_eq!(
-            get_mime_type_opt("gif").unwrap().to_string(),
+            from_ext("gif").first().unwrap().to_string(),
             "image/gif".to_string()
         );
         assert_eq!(
-            get_mime_type_opt("TXT").unwrap().to_string(),
+            from_ext("TXT").first().unwrap().to_string(),
             "text/plain".to_string()
         );
-        assert_eq!(get_mime_type_opt("blahblah"), None);
+        assert_eq!(from_ext("blahblah").first(), None);
 
         assert_eq!(
-            guess_mime_type_opt("/path/to/file.gif")
+            from_path("/path/to/file.gif").first()
                 .unwrap()
                 .to_string(),
             "image/gif".to_string()
         );
-        assert_eq!(guess_mime_type_opt("/path/to/file"), None);
+        assert_eq!(from_path("/path/to/file").first(), None);
     }
 
     #[test]
@@ -449,37 +408,4 @@ mod tests {
         }
     }
 
-}
-
-#[cfg(feature = "bench")]
-mod bench {
-    extern crate test;
-
-    use self::test::Bencher;
-
-    use super::{get_mime_type_str, MIME_TYPES};
-
-    /// WARNING: this may take a while!
-    #[bench]
-    fn bench_mime_str(b: &mut Bencher) {
-        for (mime_ext, _) in &MIME_TYPES {
-            b.iter(|| {
-                get_mime_type_str(mime_ext).expect(mime_ext);
-            });
-        }
-    }
-
-    #[bench]
-    fn bench_mime_str_uppercase(b: &mut Bencher) {
-        let uppercased: Vec<_> = MIME_TYPES
-            .into_iter()
-            .map(|(s, _)| s.to_uppercase())
-            .collect();
-
-        for mime_ext in &uppercased {
-            b.iter(|| {
-                get_mime_type_str(mime_ext).expect(mime_ext);
-            });
-        }
-    }
 }

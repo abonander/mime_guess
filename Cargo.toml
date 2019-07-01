@@ -11,7 +11,6 @@ documentation = "https://docs.rs/mime_guess/"
 
 [features]
 default = ["rev-mappings"]
-bench = []
 
 # generate reverse-mappings for lookup of extensions by MIME type
 # default-on but can be turned off for smaller generated code
@@ -19,13 +18,28 @@ rev-mappings = []
 
 [dependencies]
 mime = "0.3"
-phf = { version = "0.7.22", features = ["unicase"] }
-unicase = "1.1"
+unicase = "2.4.0"
+
+[dependencies.phf]
+# version = "0.7.24"
+git = "https://github.com/sfackler/rust-phf"
+features = ["unicase"]
+optional = true
 
 [build-dependencies]
-phf_codegen = "0.7.22"
-unicase = "1.1"
+unicase = "2.4.0"
+
+[build-dependencies.phf_codegen]
+# version = "0.7.24"
+git = "https://github.com/sfackler/rust-phf"
+
+[dev-dependencies]
+criterion = "0.2"
 
 [[example]]
 name = "rev_map"
 required-features = ["rev-mappings"]
+
+[[bench]]
+name = "benchmark"
+harness = false
