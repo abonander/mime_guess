@@ -19,14 +19,26 @@ use mime_types::MIME_TYPES;
 mod mime_types;
 
 fn main() {
+    let feature_phf = env::var("CARGO_FEATURE_PHF").is_ok();
+    let feature_rev_mappings = env::var("CARGO_FEATURE_REV_MAPPINGS").is_ok();
+
+    // don't write a file if we don't have to
+    if !(feature_phf || feature_rev_mappings) {
+        return;
+    }
+
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("mime_types_generated.rs");
     let mut outfile = BufWriter::new(File::create(dest_path).unwrap());
 
-    build_forward_map(&mut outfile);
+    if feature_phf {
+        build_forward_map(&mut outfile);
+    }
 
-    if env::var("CARGO_FEATURE_REV_MAPPINGS").is_ok() {
-        build_rev_map(&mut outfile);
+    if feature_phf && feature_rev_mappings {
+        build_rev_phf_map(&mut outfile);
+    } else if feature_rev_mappings {
+
     }
 }
 
@@ -54,7 +66,10 @@ fn build_forward_map<W: Write>(out: &mut W) {
     }
 
     for (key, values) in map_entries {
-        forward_map.entry(UniCase::new(key), &format!("&{:?} as &'static [&'static str]", values));
+        forward_map.entry(
+            UniCase::new(key),
+            &format!("&{:?} as &'static [&'static str]", values),
+        );
     }
 
     forward_map.build(out).unwrap();
@@ -63,7 +78,7 @@ fn build_forward_map<W: Write>(out: &mut W) {
 }
 
 // Build reverse mappings (mime type -> ext)
-fn build_rev_map<W: Write>(out: &mut W) {
+fn build_rev_phf_map<W: Write>(out: &mut W) {
     // First, collect all the mime type -> ext mappings)
     let mut dyn_map = BTreeMap::new();
 
