@@ -326,7 +326,9 @@ pub fn octet_stream() -> Mime {
 
 #[cfg(test)]
 mod tests {
-    use super::{from_ext, from_path, MIME_TYPES};
+    include!("mime_types.rs");
+
+    use super::{from_ext, from_path};
     use mime::Mime;
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
