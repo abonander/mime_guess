@@ -1,5 +1,12 @@
 use unicase::UniCase;
-include!("src/mime_types.rs");
+include!("mime_types.rs");
+
+#[cfg(feature = "rev-mappings")]
+struct TopLevelExts {
+    start: usize,
+    end: usize,
+    subs: &'static [(UniCase<&'static str>, (usize, usize))],
+}
 
 pub fn get_mime_types(ext: &str) -> Option<&'static [&'static str]> {
     let ext = UniCase::new(ext);

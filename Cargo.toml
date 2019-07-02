@@ -32,6 +32,7 @@ unicase = "2.4.0"
 [build-dependencies.phf_codegen]
 # version = "0.7.24"
 git = "https://github.com/sfackler/rust-phf"
+optional = true
 
 [dev-dependencies]
 criterion = "0.2"
