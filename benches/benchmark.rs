@@ -6,7 +6,7 @@ use self::criterion::Criterion;
 
 use mime_guess::from_ext;
 
-include!("src/mime_types.rs");
+include!("../src/mime_types.rs");
 
 /// WARNING: this may take a while!
 fn bench_mime_str(c: &mut Criterion) {

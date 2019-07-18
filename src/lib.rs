@@ -17,16 +17,16 @@ pub use mime::Mime;
 use unicase::UniCase;
 
 use std::ffi::OsStr;
+use std::iter::FusedIterator;
 use std::path::Path;
 use std::{iter, slice};
-use std::iter::FusedIterator;
 
 #[cfg(feature = "phf")]
-#[path="impl_phf.rs"]
+#[path = "impl_phf.rs"]
 mod impl_;
 
 #[cfg(not(feature = "phf"))]
-#[path="impl_bin_search.rs"]
+#[path = "impl_bin_search.rs"]
 mod impl_;
 
 /// A "guess" of the MIME/Media Type(s) of an extension or path as one or more
@@ -35,13 +35,14 @@ mod impl_;
 /// ### Note: Ordering
 /// A given file format may have one or more applicable Media Types; in this case
 /// the first Media Type returned is whatever is declared in the latest IETF RFC for the
-/// assumed file format or the one that explicitly supercedes all others.
+/// presumed file format or the one that explicitly supercedes all others.
 /// Ordering of additional Media Types is arbitrary.
 ///
 /// ### Note: Values Not Stable
 /// The exact Media Types returned in any given guess are not considered to be stable and are often
 /// updated in point-releases in order to reflect the most up-to-date information possible.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+// FIXME: change repr when `mime` gains macro/const fn constructor
 pub struct MimeGuess(&'static [&'static str]);
 
 impl MimeGuess {
@@ -50,7 +51,9 @@ impl MimeGuess {
     /// If `ext` is empty or has no (currently) known MIME type mapping, then an empty guess is
     /// returned.
     pub fn from_ext(ext: &str) -> MimeGuess {
-        if ext.is_empty() { return MimeGuess(&[]) }
+        if ext.is_empty() {
+            return MimeGuess(&[]);
+        }
 
         impl_::get_mime_types(ext).map_or(MimeGuess(&[]), |v| MimeGuess(v))
     }
@@ -67,7 +70,8 @@ impl MimeGuess {
     ///
     /// Take care when processing files with assumptions based on the return value of this function.
     pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
-        path.as_ref().extension()
+        path.as_ref()
+            .extension()
             .and_then(OsStr::to_str)
             .map_or(MimeGuess(&[]), Self::from_ext)
     }
@@ -75,10 +79,8 @@ impl MimeGuess {
     /// Get the first guessed `Mime`, if applicable.
     ///
     /// See [Note: Ordering](#note-ordering) above.
-    ///
-    /// If you require a `&'static Mime`, use `self.as_slice().get(0)` instead.
     pub fn first(&self) -> Option<Mime> {
-        self.first_as_str().map(|s| s.parse().unwrap())
+        self.first_as_str().map(expect_mime)
     }
 
     /// Get the first guessed Media Type as a string, if applicable.
@@ -95,7 +97,7 @@ impl MimeGuess {
 
     /// Get the number of MIME types in the current guess.
     pub fn count(&self) -> usize {
-         self.0.len()
+        self.0.len()
     }
 
     /// Get the first guessed `Mime`, or if the guess is empty, return `application/octet-stream`
@@ -115,16 +117,27 @@ impl MimeGuess {
         self.or(mime::TEXT_PLAIN)
     }
 
+    /// If the guess is empty, return the given `Mime` instead.
     pub fn or(&self, default: Mime) -> Mime {
         self.first().unwrap_or(default)
     }
 
-    pub fn or_else<F>(&self, default_fn: F) -> Mime where F: FnOnce() -> Mime {
+    /// If the guess is empty, execute the closure and return its result.
+    pub fn or_else<F>(&self, default_fn: F) -> Mime
+    where
+        F: FnOnce() -> Mime,
+    {
         self.first().unwrap_or_else(default_fn)
     }
 
+    /// Get an iterator over the `Mime` values contained in this guess.
     pub fn iter(&self) -> Iter {
-        Iter(self.0.iter())
+        Iter(self.iter_raw().map(expect_mime))
+    }
+
+    /// Get an iterator over the raw mediatype strings in this guess.
+    pub fn iter_raw(&self) -> IterRaw {
+        IterRaw(self.0.iter().cloned())
     }
 }
 
@@ -146,13 +159,14 @@ impl<'a> IntoIterator for &'a MimeGuess {
     }
 }
 
-pub struct Iter(slice::Iter<'static, &'static str>);
+#[derive(Clone, Debug)]
+pub struct Iter(iter::Map<IterRaw, fn(&'static str) -> Mime>);
 
 impl Iterator for Iter {
     type Item = Mime;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|s| s.parse().unwrap())
+        self.0.next()
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -162,13 +176,52 @@ impl Iterator for Iter {
 
 impl DoubleEndedIterator for Iter {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|s| s.parse().unwrap())
+        self.0.next_back()
     }
 }
 
 impl FusedIterator for Iter {}
 
-impl ExactSizeIterator for Iter {}
+impl ExactSizeIterator for Iter {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct IterRaw(iter::Cloned<slice::Iter<'static, &'static str>>);
+
+impl Iterator for IterRaw {
+    type Item = &'static str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl DoubleEndedIterator for IterRaw {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0.next_back()
+    }
+}
+
+impl FusedIterator for IterRaw {}
+
+impl ExactSizeIterator for IterRaw {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+fn expect_mime(s: &str) -> Mime {
+    // `.parse()` should be checked at compile time to never fail
+    s.parse()
+        .unwrap_or_else(|e| panic!("failed to parse media-type {:?}: {}", s, e))
+}
 
 /// Wrapper of [`MimeGuess::from_ext()`](MimeGuess::from_ext).
 pub fn from_ext(ext: &str) -> MimeGuess {
@@ -195,7 +248,10 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
 /// header at all instead of defaulting to `application/content-stream`.
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
-#[deprecated(since = "2.0.0", note = "Use `from_path(path).or_octet_stream()` instead")]
+#[deprecated(
+    since = "2.0.0",
+    note = "Use `from_path(path).or_octet_stream()` instead"
+)]
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
     from_path(path).or_octet_stream()
 }
@@ -235,7 +291,10 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
 /// header at all instead of defaulting to `application/content-stream`.
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
-#[deprecated(since = "2.0.0", note = "use `from_ext(search_ext).or_octet_stream()` instead")]
+#[deprecated(
+    since = "2.0.0",
+    note = "use `from_ext(search_ext).or_octet_stream()` instead"
+)]
 pub fn get_mime_type(search_ext: &str) -> Mime {
     from_ext(search_ext).or_octet_stream()
 }
@@ -255,7 +314,10 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 /// it will be converted to lowercase to facilitate the search.
 ///
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
-#[deprecated(since = "2.0.0", note = "use `from_ext(search_ext).first_as_str()` instead")]
+#[deprecated(
+    since = "2.0.0",
+    note = "use `from_ext(search_ext).first_as_str()` instead"
+)]
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     from_path(search_ext).first_as_str()
 }
@@ -328,7 +390,7 @@ pub fn octet_stream() -> Mime {
 mod tests {
     include!("mime_types.rs");
 
-    use super::{from_ext, from_path};
+    use super::{from_ext, from_path, expect_mime};
     use mime::Mime;
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
@@ -336,8 +398,14 @@ mod tests {
 
     #[test]
     fn test_mime_type_guessing() {
-        assert_eq!(from_ext("gif").or_octet_stream().to_string(), "image/gif".to_string());
-        assert_eq!(from_ext("TXT").or_octet_stream().to_string(), "text/plain".to_string());
+        assert_eq!(
+            from_ext("gif").or_octet_stream().to_string(),
+            "image/gif".to_string()
+        );
+        assert_eq!(
+            from_ext("TXT").or_octet_stream().to_string(),
+            "text/plain".to_string()
+        );
         assert_eq!(
             from_ext("blahblah").or_octet_stream().to_string(),
             "application/octet-stream".to_string()
@@ -345,12 +413,12 @@ mod tests {
 
         assert_eq!(
             from_path(Path::new("/path/to/file.gif"))
-                .or_octet_stream().to_string(),
+                .or_octet_stream()
+                .to_string(),
             "image/gif".to_string()
         );
         assert_eq!(
-            from_path("/path/to/file.gif")
-                .or_octet_stream().to_string(),
+            from_path("/path/to/file.gif").or_octet_stream().to_string(),
             "image/gif".to_string()
         );
     }
@@ -368,9 +436,7 @@ mod tests {
         assert_eq!(from_ext("blahblah").first(), None);
 
         assert_eq!(
-            from_path("/path/to/file.gif").first()
-                .unwrap()
-                .to_string(),
+            from_path("/path/to/file.gif").first().unwrap().to_string(),
             "image/gif".to_string()
         );
         assert_eq!(from_path("/path/to/file").first(), None);
@@ -378,17 +444,15 @@ mod tests {
 
     #[test]
     fn test_are_mime_types_parseable() {
-        for (_, mimes) in &MIME_TYPES {
-            for mime in *mimes {
-                mime.parse::<Mime>().unwrap();
-            }
+        for (_, mimes) in MIME_TYPES {
+            mimes.iter().for_each(|s| { expect_mime(s); });
         }
     }
 
     // RFC: Is this test necessary anymore? --@cybergeek94, 2/1/2016
     #[test]
     fn test_are_extensions_ascii() {
-        for (ext, _) in &MIME_TYPES {
+        for (ext, _) in MIME_TYPES {
             assert!(ext.is_ascii(), "Extension not ASCII: {:?}", ext);
         }
     }
@@ -396,9 +460,6 @@ mod tests {
     #[test]
     fn test_are_extensions_sorted() {
         // simultaneously checks the requirement that duplicate extension entries are adjacent
-
-        use mime_types_src::MIME_TYPES;
-
         for (&(ext, _), &(n_ext, _)) in MIME_TYPES.iter().zip(MIME_TYPES.iter().skip(1)) {
             assert!(
                 ext <= n_ext,
@@ -409,5 +470,4 @@ mod tests {
             );
         }
     }
-
 }

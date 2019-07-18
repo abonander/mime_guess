@@ -1,7 +1,11 @@
 use unicase::UniCase;
 include!("mime_types.rs");
+include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
+
+use std::cmp::{PartialEq, PartialOrd};
 
 #[cfg(feature = "rev-mappings")]
+#[derive(Copy, Clone)]
 struct TopLevelExts {
     start: usize,
     end: usize,
@@ -19,7 +23,7 @@ pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'stat
         return Some(EXTS);
     }
 
-    let top = map_lookup(REV_MAPPINGS, key)?;
+    let top = map_lookup(REV_MAPPINGS, toplevel)?;
 
     if sublevel == "*" {
         return Some(&EXTS[top.start..top.end]);
@@ -29,6 +33,9 @@ pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'stat
     Some(&EXTS[sub.0..sub.1])
 }
 
-fn map_lookup<V>(map: &'static [(&'static str, V)], key: &str) -> Option<V> {
-    map.binary_search_by_key(&UniCase::new(key), |(k, _)| UniCase::ascii(k))
+fn map_lookup<K, V>(map: &'static [(K, V)], key: &str) -> Option<V>
+    where K: Copy + Into<UniCase<&'static str>>, V: Copy {
+    map.binary_search_by_key(&UniCase::new(key), |(k, _)| (*k).into())
+        .ok()
+        .map(|i| map[i].1)
 }
