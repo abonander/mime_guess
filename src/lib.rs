@@ -159,6 +159,7 @@ impl<'a> IntoIterator for &'a MimeGuess {
     }
 }
 
+/// An iterator over the `Mime` types of a `MimeGuess`.
 #[derive(Clone, Debug)]
 pub struct Iter(iter::Map<IterRaw, fn(&'static str) -> Mime>);
 
@@ -188,6 +189,7 @@ impl ExactSizeIterator for Iter {
     }
 }
 
+/// An iterator over the raw media type strings of a `MimeGuess`.
 #[derive(Clone, Debug)]
 pub struct IterRaw(iter::Cloned<slice::Iter<'static, &'static str>>);
 
@@ -394,7 +396,19 @@ mod tests {
     use mime::Mime;
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
+
+    use std::fmt::Debug;
     use std::path::Path;
+
+
+    #[test]
+    fn check_type_bounds() {
+        fn assert_type_bounds<T: Clone + Debug + Send + Sync + 'static>() {}
+
+        assert_type_bounds::<super::MimeGuess>();
+        assert_type_bounds::<super::Iter>();
+        assert_type_bounds::<super::IterRaw>();
+    }
 
     #[test]
     fn test_mime_type_guessing() {
