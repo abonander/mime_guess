@@ -120,18 +120,24 @@ fn build_rev_map<W: Write>(out: &mut W) {
     writeln!(out, "const EXTS: &'static [&'static str] = &{:?};", exts).unwrap();
 }
 
-
 #[cfg(all(not(feature = "phf"), feature = "rev-mappings"))]
 fn build_rev_map<W: Write>(out: &mut W) {
     use std::fmt::Write as _;
+    use std::fmt;
+
+    macro_rules! unicase_const {
+        ($s:expr) => ({
+            format_args!("{}({:?})", (if $s.is_ascii() {
+                "UniCase::ascii"
+            } else {
+                "UniCase::unicode"
+            }), $s)
+        })
+    }
 
     let dyn_map = get_rev_mappings();
 
-    write!(
-        out,
-        "static REV_MAPPINGS: &'static [TopLevelExts] = ["
-    )
-        .unwrap();
+    write!(out, "static REV_MAPPINGS: &'static [(UniCase<&'static str>, TopLevelExts)] = &[").unwrap();
 
     let mut exts = Vec::new();
 
@@ -145,21 +151,20 @@ fn build_rev_map<W: Write>(out: &mut W) {
             exts.extend(sub_exts);
             let sub_end = exts.len();
 
-            let constructor = if sub.is_ascii() {
-                "UniCase::ascii"
-            } else {
-                "UniCase::unicode"
-            };
-
-            write!(sub_map, "({}({}), &[({}, {})]", constructor, sub, sub_start, sub_end)?;
+            write!(
+                sub_map,
+                "({}, ({}, {})),",
+                unicase_const!(sub), sub_start, sub_end
+            ).unwrap();
         }
 
         let top_end = exts.len();
 
-        write!(out,
-            "TopLevelExts { start: {}, end: {}, subs: {} },",
-            top_start, top_end, sub_map
-        );
+        write!(
+            out,
+            "({}, TopLevelExts {{ start: {}, end: {}, subs: &[{}] }}),",
+            unicase_const!(top), top_start, top_end, sub_map
+        ).unwrap();
     }
 
     writeln!(out, "];").unwrap();
@@ -167,10 +172,10 @@ fn build_rev_map<W: Write>(out: &mut W) {
     writeln!(out, "const EXTS: &'static [&'static str] = &{:?};", exts).unwrap();
 }
 
-
 #[cfg(feature = "rev-mappings")]
-fn get_rev_mappings() -> BTreeMap<UniCase<&'static str>, BTreeMap<UniCase<&'static str>, Vec<&'static str>>> {
-// First, collect all the mime type -> ext mappings)
+fn get_rev_mappings(
+) -> BTreeMap<UniCase<&'static str>, BTreeMap<UniCase<&'static str>, Vec<&'static str>>> {
+    // First, collect all the mime type -> ext mappings)
     let mut dyn_map = BTreeMap::new();
     for &(key, types) in MIME_TYPES {
         for val in types {
