@@ -11,6 +11,7 @@ documentation = "https://docs.rs/mime_guess/"
 
 [features]
 default = ["rev-mappings"]
+# phf-map = ["phf", "phf_codegen"]
 
 # generate reverse-mappings for lookup of extensions by MIME type
 # default-on but can be turned off for smaller generated code
@@ -20,19 +21,21 @@ rev-mappings = []
 mime = "0.3"
 unicase = "2.4.0"
 
-[dependencies.phf]
-# version = "0.7.24"
-git = "https://github.com/sfackler/rust-phf"
-features = ["unicase"]
-optional = true
+#[dependencies.phf]
+## version = "0.7.24"
+## git = "https://github.com/sfackler/rust-phf"
+#path = "../rust-phf/phf"
+#features = ["unicase"]
+#optional = true
 
 [build-dependencies]
 unicase = "2.4.0"
 
-[build-dependencies.phf_codegen]
-# version = "0.7.24"
-git = "https://github.com/sfackler/rust-phf"
-optional = true
+#[build-dependencies.phf_codegen]
+#version = "0.7.24"
+#git = "https://github.com/sfackler/rust-phf"
+#path = "../rust-phf/phf_codegen"
+#optional = true
 
 [dev-dependencies]
 criterion = "0.2"
