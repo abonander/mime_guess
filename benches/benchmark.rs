@@ -12,7 +12,7 @@ include!("../src/mime_types.rs");
 fn bench_mime_str(c: &mut Criterion) {
     c.bench_function("from_ext", |b| {
         for (mime_ext, _) in MIME_TYPES {
-            b.iter(|| from_ext(mime_ext).first_as_str());
+            b.iter(|| from_ext(mime_ext).first_raw());
         }
     });
 }
@@ -22,7 +22,7 @@ fn bench_mime_str_uppercase(c: &mut Criterion) {
         let uppercased = MIME_TYPES.into_iter().map(|(s, _)| s.to_uppercase());
 
         for mime_ext in uppercased {
-            b.iter(|| from_ext(&mime_ext).first_as_str());
+            b.iter(|| from_ext(&mime_ext).first_raw());
         }
     });
 }
