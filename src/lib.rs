@@ -90,13 +90,13 @@ impl MimeGuess {
     ///
     /// See [Note: Ordering](#note-ordering) above.
     pub fn first(&self) -> Option<Mime> {
-        self.first_as_str().map(expect_mime)
+        self.first_raw().map(expect_mime)
     }
 
     /// Get the first guessed Media Type as a string, if applicable.
     ///
     /// See [Note: Ordering](#note-ordering) above.
-    pub fn first_as_str(&self) -> Option<&'static str> {
+    pub fn first_raw(&self) -> Option<&'static str> {
         self.0.get(0).cloned()
     }
 
@@ -331,7 +331,7 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
     note = "use `from_ext(search_ext).first_as_str()` instead"
 )]
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
-    from_path(search_ext).first_as_str()
+    from_path(search_ext).first_raw()
 }
 
 /// Get a list of known extensions for a given `Mime`.
