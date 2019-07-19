@@ -4,23 +4,22 @@
 //!
 //! ```
 //! # extern crate mime;
-//!
 //! // the file doesn't have to exist, it just looks at the path
 //! let guess = mime_guess::from_path("some_file.gif");
 //! assert_eq!(guess.first(), Some(mime::IMAGE_GIF));
 //!
 //! ```
 //!
-//!
 //! #### Note: MIME Types Returned Are Not Stable/Guaranteed
 //! The media types returned for a given extension are not considered to be part of the crate's
-//! stable API and are often updated in patch (#.#.x) releases to be as correct as possible.
+//! stable API and are often updated in patch <br /> (`x.y.[z + 1]`) releases to be as correct as
+//! possible.
 //!
 //! Additionally, only the extensions of paths/filenames are inspected in order to guess the MIME
 //! type. The file that may or may not reside at that path may or may not be a valid file of the
 //! returned MIME type.  Be wary of unsafe or un-validated assumptions about file structure or
 //! length.
-extern crate mime;
+pub extern crate mime;
 extern crate unicase;
 
 pub use mime::Mime;
@@ -50,13 +49,15 @@ mod impl_;
 ///
 /// ### Note: Values Not Stable
 /// The exact Media Types returned in any given guess are not considered to be stable and are often
-/// updated in point-releases in order to reflect the most up-to-date information possible.
+/// updated in patch releases in order to reflect the most up-to-date information possible.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 // FIXME: change repr when `mime` gains macro/const fn constructor
 pub struct MimeGuess(&'static [&'static str]);
 
 impl MimeGuess {
     /// Guess the MIME type of a file (real or otherwise) with the given extension.
+    ///
+    /// The search is case-insensitive.
     ///
     /// If `ext` is empty or has no (currently) known MIME type mapping, then an empty guess is
     /// returned.
@@ -74,6 +75,8 @@ impl MimeGuess {
     /// If `path` has no extension, the extension cannot be converted to `str`, or has
     /// no known MIME type mapping, then an empty guess is returned.
     ///
+    /// The search is case-insensitive.
+    ///
     /// ## Note
     /// **Guess** is the operative word here, as there are no guarantees that the contents of the
     /// file that `path` points to match the MIME type associated with the path's extension.
@@ -84,6 +87,16 @@ impl MimeGuess {
             .extension()
             .and_then(OsStr::to_str)
             .map_or(MimeGuess(&[]), Self::from_ext)
+    }
+
+    /// `true` if the guess did not return any known mappings for the given path or extension.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Get the number of MIME types in the current guess.
+    pub fn count(&self) -> usize {
+        self.0.len()
     }
 
     /// Get the first guessed `Mime`, if applicable.
@@ -100,40 +113,48 @@ impl MimeGuess {
         self.0.get(0).cloned()
     }
 
-    /// `true` if the guess did not return any known mappings for the given path or extension.
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// Get the number of MIME types in the current guess.
-    pub fn count(&self) -> usize {
-        self.0.len()
-    }
-
-    /// Get the first guessed `Mime`, or if the guess is empty, return `application/octet-stream`
+    /// Get the first guessed `Mime`, or if the guess is empty, return
+    /// [`application/octet-stream`](::mime::APPLICATION_OCTET_STREAM)
     /// instead.
     ///
-    /// ### Note
-    /// In HTTP applications, it might be [preferable][rfc7231] to not send a `Content-Type`
-    /// header at all instead of defaulting to `application/content-stream`.
+    /// See [Note: Ordering](#note-ordering) above.
+    ///
+    /// ### Note: HTTP Applications
+    /// For HTTP request and response bodies if a value for the `Content-Type` header
+    /// cannot be determined it might be preferable to not send one at all instead of defaulting to
+    /// `application/content-stream` as the recipient will expect to infer the format directly from
+    /// the content instead. ([RFC 7231, Section 3.1.1.5][rfc7231])
+    ///
+    /// On the contrary, for `multipart/form-data` bodies, the `Content-Type` of a form-data part is
+    /// assumed to be `text/plain` unless specified so a default of `application/content-stream`
+    /// for non-text parts is safer. ([RFC 7578, Section 4.4][rfc7578])
     ///
     /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
-    pub fn or_octet_stream(&self) -> Mime {
-        self.or(mime::APPLICATION_OCTET_STREAM)
+    /// [rfc7578]: https://tools.ietf.org/html/rfc7578#section-4.4
+    pub fn first_or_octet_stream(&self) -> Mime {
+        self.first_or(mime::APPLICATION_OCTET_STREAM)
     }
 
-    /// If the guess is empty, return `text/plain` instead.
-    pub fn or_text_plain(&self) -> Mime {
-        self.or(mime::TEXT_PLAIN)
+    /// Get the first guessed `Mime`, or if the guess is empty, return
+    /// [`text/plain`](::mime::TEXT_PLAIN) instead.
+    ///
+    /// See [Note: Ordering](#note-ordering) above.
+    pub fn first_or_text_plain(&self) -> Mime {
+        self.first_or(mime::TEXT_PLAIN)
     }
 
-    /// If the guess is empty, return the given `Mime` instead.
-    pub fn or(&self, default: Mime) -> Mime {
+    /// Get the first guessed `Mime`, or if the guess is empty, return the given `Mime` instead.
+    ///
+    /// See [Note: Ordering](#note-ordering) above.
+    pub fn first_or(&self, default: Mime) -> Mime {
         self.first().unwrap_or(default)
     }
 
-    /// If the guess is empty, execute the closure and return its result.
-    pub fn or_else<F>(&self, default_fn: F) -> Mime
+    /// Get the first guessed `Mime`, or if the guess is empty, execute the closure and return its
+    /// result.
+    ///
+    /// See [Note: Ordering](#note-ordering) above.
+    pub fn first_or_else<F>(&self, default_fn: F) -> Mime
     where
         F: FnOnce() -> Mime,
     {
@@ -141,11 +162,15 @@ impl MimeGuess {
     }
 
     /// Get an iterator over the `Mime` values contained in this guess.
+    ///
+    /// See [Note: Ordering](#note-ordering) above.
     pub fn iter(&self) -> Iter {
         Iter(self.iter_raw().map(expect_mime))
     }
 
     /// Get an iterator over the raw media-type strings in this guess.
+    ///
+    /// See [Note: Ordering](#note-ordering) above.
     pub fn iter_raw(&self) -> IterRaw {
         IterRaw(self.0.iter().cloned())
     }
@@ -170,6 +195,8 @@ impl<'a> IntoIterator for &'a MimeGuess {
 }
 
 /// An iterator over the `Mime` types of a `MimeGuess`.
+///
+/// See [Note: Ordering on `MimeGuess`](struct.MimeGuess.html#note-ordering).
 #[derive(Clone, Debug)]
 pub struct Iter(iter::Map<IterRaw, fn(&'static str) -> Mime>);
 
@@ -200,6 +227,8 @@ impl ExactSizeIterator for Iter {
 }
 
 /// An iterator over the raw media type strings of a `MimeGuess`.
+///
+/// See [Note: Ordering on `MimeGuess`](struct.MimeGuess.html#note-ordering).
 #[derive(Clone, Debug)]
 pub struct IterRaw(iter::Cloned<slice::Iter<'static, &'static str>>);
 
@@ -265,7 +294,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
     note = "Use `from_path(path).or_octet_stream()` instead"
 )]
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
-    from_path(path).or_octet_stream()
+    from_path(path).first_or_octet_stream()
 }
 
 /// Guess the MIME type of `path` by its extension (as defined by `Path::extension()`).
@@ -308,7 +337,7 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
     note = "use `from_ext(search_ext).or_octet_stream()` instead"
 )]
 pub fn get_mime_type(search_ext: &str) -> Mime {
-    from_ext(search_ext).or_octet_stream()
+    from_ext(search_ext).first_or_octet_stream()
 }
 
 /// Get the MIME type associated with a file extension.
@@ -423,26 +452,26 @@ mod tests {
     #[test]
     fn test_mime_type_guessing() {
         assert_eq!(
-            from_ext("gif").or_octet_stream().to_string(),
+            from_ext("gif").first_or_octet_stream().to_string(),
             "image/gif".to_string()
         );
         assert_eq!(
-            from_ext("TXT").or_octet_stream().to_string(),
+            from_ext("TXT").first_or_octet_stream().to_string(),
             "text/plain".to_string()
         );
         assert_eq!(
-            from_ext("blahblah").or_octet_stream().to_string(),
+            from_ext("blahblah").first_or_octet_stream().to_string(),
             "application/octet-stream".to_string()
         );
 
         assert_eq!(
             from_path(Path::new("/path/to/file.gif"))
-                .or_octet_stream()
+                .first_or_octet_stream()
                 .to_string(),
             "image/gif".to_string()
         );
         assert_eq!(
-            from_path("/path/to/file.gif").or_octet_stream().to_string(),
+            from_path("/path/to/file.gif").first_or_octet_stream().to_string(),
             "image/gif".to_string()
         );
     }
