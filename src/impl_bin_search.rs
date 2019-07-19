@@ -1,4 +1,5 @@
 use unicase::UniCase;
+
 include!("mime_types.rs");
 include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
 
@@ -18,6 +19,7 @@ pub fn get_mime_types(ext: &str) -> Option<&'static [&'static str]> {
     map_lookup(MIME_TYPES, &ext)
 }
 
+#[cfg(feature = "rev-mappings")]
 pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
     if toplevel == "*" {
         return Some(EXTS);
