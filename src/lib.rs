@@ -2,6 +2,16 @@
 //!
 //! Uses a static list of file-extension : MIME type mappings.
 //!
+//! ```
+//! # extern crate mime;
+//!
+//! // the file doesn't have to exist, it just looks at the path
+//! let guess = mime_guess::from_path("some_file.gif");
+//! assert_eq!(guess.first(), Some(mime::IMAGE_GIF));
+//!
+//! ```
+//!
+//!
 //! #### Note: MIME Types Returned Are Not Stable/Guaranteed
 //! The media types returned for a given extension are not considered to be part of the crate's
 //! stable API and are often updated in patch (#.#.x) releases to be as correct as possible.
@@ -135,7 +145,7 @@ impl MimeGuess {
         Iter(self.iter_raw().map(expect_mime))
     }
 
-    /// Get an iterator over the raw mediatype strings in this guess.
+    /// Get an iterator over the raw media-type strings in this guess.
     pub fn iter_raw(&self) -> IterRaw {
         IterRaw(self.0.iter().cloned())
     }
