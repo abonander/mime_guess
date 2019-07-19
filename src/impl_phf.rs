@@ -12,7 +12,7 @@ struct TopLevelExts {
 }
 
 pub fn get_mime_types(ext: &str) -> Option<&'static [&'static str]> {
-    map_lookup(&MIME_TYPES, ext)
+    map_lookup(&MIME_TYPES, ext).cloned()
 }
 
 pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
@@ -20,25 +20,20 @@ pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'stat
         return Some(EXTS);
     }
 
-    let top = try_opt!(map_lookup(&REV_MAPPINGS, toplevel));
+    let top = map_lookup(&REV_MAPPINGS, toplevel)?;
 
     if sublevel == "*" {
         return Some(&EXTS[top.start..top.end]);
     }
 
-    let sub = try_opt!(map_lookup(&top.subs, sublevel));
+    let sub = map_lookup(&top.subs, sublevel)?;
     Some(&EXTS[sub.0..sub.1])
 }
 
-fn map_lookup<'map, V>(
+fn map_lookup<'key, 'map: 'key, V>(
     map: &'map phf::Map<UniCase<&'static str>, V>,
-    key: &str,
+    key: &'key str,
 ) -> Option<&'map V> {
-    // This transmute should be safe as `get` will not store the reference with
-    // the expanded lifetime. This is due to `Borrow` being overly strict and
-    // can't have an impl for `&'static str` to `Borrow<&'a str>`.
-    //
-    // See https://github.com/rust-lang/rust/issues/28853#issuecomment-158735548
-    let key = unsafe { ::std::mem::transmute::<&str, &'static str>(key) };
+    // FIXME: this doesn't compile unless we transmute `key` to `&'static str`
     map.get(&UniCase::new(key))
 }
