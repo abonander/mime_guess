@@ -118,7 +118,6 @@ fn build_rev_map<W: Write>(out: &mut W) {
 #[cfg(all(not(feature = "phf"), feature = "rev-mappings"))]
 fn build_rev_map<W: Write>(out: &mut W) {
     use std::fmt::Write as _;
-    use std::fmt;
 
     macro_rules! unicase_const {
         ($s:expr) => ({

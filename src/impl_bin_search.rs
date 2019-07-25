@@ -3,8 +3,6 @@ use unicase::UniCase;
 include!("mime_types.rs");
 include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
 
-use std::cmp::{PartialEq, PartialOrd};
-
 #[cfg(feature = "rev-mappings")]
 #[derive(Copy, Clone)]
 struct TopLevelExts {
