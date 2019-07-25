@@ -8,6 +8,7 @@ description = "A simple crate for detection of a file's MIME type by its extensi
 keywords = ["mime", "filesystem", "extension"]
 repository = "https://github.com/abonander/mime_guess"
 documentation = "https://docs.rs/mime_guess/"
+readme = "README.md"
 
 [features]
 default = ["rev-mappings"]
