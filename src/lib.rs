@@ -23,7 +23,6 @@ pub extern crate mime;
 extern crate unicase;
 
 pub use mime::Mime;
-use unicase::UniCase;
 
 use std::ffi::OsStr;
 use std::iter::FusedIterator;
@@ -432,7 +431,6 @@ mod tests {
     include!("mime_types.rs");
 
     use super::{from_ext, from_path, expect_mime};
-    use mime::Mime;
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
 

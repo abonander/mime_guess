@@ -11,6 +11,7 @@ documentation = "https://docs.rs/mime_guess/"
 
 [features]
 default = ["rev-mappings"]
+# FIXME: when `phf` release 0.8.0 is ready
 # phf-map = ["phf", "phf_codegen"]
 
 # generate reverse-mappings for lookup of extensions by MIME type
