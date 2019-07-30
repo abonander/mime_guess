@@ -7,6 +7,9 @@
 /// order is arbitrary but the first should be the most prevalent by most recent RFC declaration
 /// or explicit succession of other media types.
 ///
+/// As of release 2.0.0, new and modified mappings should have citations provided inline
+/// in order to provide an audit trail that's easier to follow than Git commit history.
+///
 /// Sourced from:
 /// https://github.com/samuelneff/MimeTypeMap/blob/master/src/MimeTypes/MimeTypeMap.cs
 /// https://github.com/jshttp/mime-db extracted with https://gist.github.com/soyuka/b7e29d359b2c14c21bdead923c01cc81
