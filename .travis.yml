@@ -6,9 +6,6 @@ rust:
   - beta
   - nightly
   - 1.33.0
-os:
-  - linux
-  - osx
 
 script:
   - cargo build -v
