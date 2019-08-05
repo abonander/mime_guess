@@ -290,7 +290,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 #[deprecated(
     since = "2.0.0",
-    note = "Use `from_path(path).or_octet_stream()` instead"
+    note = "Use `from_path(path).first_or_octet_stream()` instead"
 )]
 pub fn guess_mime_type<P: AsRef<Path>>(path: P) -> Mime {
     from_path(path).first_or_octet_stream()
