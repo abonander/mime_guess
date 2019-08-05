@@ -359,7 +359,7 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
     note = "use `from_ext(search_ext).first_raw()` instead"
 )]
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
-    from_path(search_ext).first_raw()
+    from_ext(search_ext).first_raw()
 }
 
 /// Get a list of known extensions for a given `Mime`.
