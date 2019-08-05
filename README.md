@@ -5,6 +5,8 @@ Uses a static map of known file extension -> MIME type mappings.
 
 **Returning Contributors: New Requirements for Submissions Below**
 
+##### Required Rust Version: 1.33
+
 #### [Documentation](https://docs.rs/mime_guess/)
 
 ### Versioning
