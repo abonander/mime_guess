@@ -38,7 +38,7 @@ mod impl_;
 mod impl_;
 
 /// A "guess" of the MIME/Media Type(s) of an extension or path as one or more
-/// [`Mime`](::mime::Mime) instances.
+/// [`Mime`](struct.Mime.html) instances.
 ///
 /// ### Note: Ordering
 /// A given file format may have one or more applicable Media Types; in this case
@@ -69,7 +69,7 @@ impl MimeGuess {
     }
 
     /// Guess the MIME type of `path` by its extension (as defined by
-    /// [`Path::extension()`](::std::path::Path::extension)). **No disk access is performed.**
+    /// [`Path::extension()`]). **No disk access is performed.**
     ///
     /// If `path` has no extension, the extension cannot be converted to `str`, or has
     /// no known MIME type mapping, then an empty guess is returned.
@@ -81,6 +81,8 @@ impl MimeGuess {
     /// file that `path` points to match the MIME type associated with the path's extension.
     ///
     /// Take care when processing files with assumptions based on the return value of this function.
+    ///
+    /// [`Path::extension()`]: https://doc.rust-lang.org/std/path/struct.Path.html#method.extension
     pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
         path.as_ref()
             .extension()
@@ -113,8 +115,7 @@ impl MimeGuess {
     }
 
     /// Get the first guessed `Mime`, or if the guess is empty, return
-    /// [`application/octet-stream`](::mime::APPLICATION_OCTET_STREAM)
-    /// instead.
+    /// [`application/octet-stream`] instead.
     ///
     /// See [Note: Ordering](#note-ordering) above.
     ///
@@ -128,6 +129,7 @@ impl MimeGuess {
     /// assumed to be `text/plain` unless specified so a default of `application/content-stream`
     /// for non-text parts is safer. ([RFC 7578, Section 4.4][rfc7578])
     ///
+    /// [`application/octet-stream`]: https://docs.rs/mime/0.3/mime/constant.APPLICATION_OCTET_STREAM.html
     /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
     /// [rfc7578]: https://tools.ietf.org/html/rfc7578#section-4.4
     pub fn first_or_octet_stream(&self) -> Mime {
@@ -263,12 +265,12 @@ fn expect_mime(s: &str) -> Mime {
         .unwrap_or_else(|e| panic!("failed to parse media-type {:?}: {}", s, e))
 }
 
-/// Wrapper of [`MimeGuess::from_ext()`](MimeGuess::from_ext).
+/// Wrapper of [`MimeGuess::from_ext()`](struct.MimeGuess.html#method.from_ext).
 pub fn from_ext(ext: &str) -> MimeGuess {
     MimeGuess::from_ext(ext)
 }
 
-/// Wrapper of [`MimeGuess::from_path()`](MimeGuess::from_path).
+/// Wrapper of [`MimeGuess::from_path()`](struct.MimeGuess.html#method.from_path).
 pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
     MimeGuess::from_path(path)
 }
