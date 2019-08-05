@@ -316,9 +316,9 @@ pub fn guess_mime_type_opt<P: AsRef<Path>>(path: P) -> Option<Mime> {
 /// that `path` points to match the MIME type associated with the path's extension.
 ///
 /// Take care when processing files with assumptions based on the return value of this function.
-#[deprecated(since = "2.0.0", note = "Use `from_path(path).first_as_str()` instead")]
+#[deprecated(since = "2.0.0", note = "Use `from_path(path).first_raw()` instead")]
 pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
-    from_path(path).0.get(0).cloned()
+    from_path(path).first_raw()
 }
 
 /// Get the MIME type associated with a file extension.
@@ -333,7 +333,7 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 #[deprecated(
     since = "2.0.0",
-    note = "use `from_ext(search_ext).or_octet_stream()` instead"
+    note = "use `from_ext(search_ext).first_or_octet_stream()` instead"
 )]
 pub fn get_mime_type(search_ext: &str) -> Mime {
     from_ext(search_ext).first_or_octet_stream()
@@ -356,7 +356,7 @@ pub fn get_mime_type_opt(search_ext: &str) -> Option<Mime> {
 /// Returns `None` if `search_ext` is empty or an associated extension was not found.
 #[deprecated(
     since = "2.0.0",
-    note = "use `from_ext(search_ext).first_as_str()` instead"
+    note = "use `from_ext(search_ext).first_raw()` instead"
 )]
 pub fn get_mime_type_str(search_ext: &str) -> Option<&'static str> {
     from_path(search_ext).first_raw()
