@@ -649,7 +649,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("mc1", &["application/vnd.medcalcdata"]),
     ("mcd", &["application/vnd.mcd"]),
     ("mcurl", &["text/vnd.curl.mcurl"]),
-    ("md", &["text/x-markdown"]),
+    ("md", &["text/markdown"]),
     ("mda", &["application/msaccess"]),
     ("mdb", &["application/x-msaccess"]),
     ("mde", &["application/msaccess"]),
