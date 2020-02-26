@@ -18,5 +18,10 @@ phf = { version = "0.7", features = ["unicase"] }
 unicase = "1.1"
 
 [build-dependencies]
+# phf is here in order to work around the fact that phf_codegen does not
+# expose the unicase feature, but depends on phf_shared being compiled with
+# unicase enabled. This enables mime_guess to compile even with the new -Z
+# features resolver in cargo.
+phf = { version = "0.7", features = ["unicase"] }
 phf_codegen = "0.7"
 unicase = "1.1"
