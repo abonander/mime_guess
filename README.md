@@ -68,7 +68,12 @@ whatever is defined by the latest IETF RFC for the given file format, or otherwi
 supercedes all others.
 
 If an official IANA registration replaces an older "experimental" style media type, please
-place the new type before the old type in the list, but keep the old type for reference.
+place the new type before the old type in the list, but keep the old type for reference:
+
+```
+- ("md", &["text/x-markdown"]),
++ ("md", &["text/markdown", "text/x-markdown"]),
+```
 
 #### Changes to the API or operation of the crate
 

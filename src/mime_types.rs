@@ -6,10 +6,13 @@
 /// the most prevalent by most recent RFC declaration or explicit succession of other media types.
 ///
 /// NOTE: when adding or modifying entries, please include a citation in the commit message.
-/// If a media type for an extension changed, please keep the old entry but add the new one before
-/// it in the slice literal, e.g.:
+/// If a media type for an extension changed by official IETF RFC, please keep the old entry but add
+/// the new one before it in the slice literal, e.g.:
 ///
-///
+/// ```
+/// - ("md", &["text/x-markdown"]),
+/// + ("md", &["text/markdown", "text/x-markdown"]),
+/// ```
 ///
 /// Sourced from:
 /// https://github.com/samuelneff/MimeTypeMap/blob/master/src/MimeTypes/MimeTypeMap.cs
