@@ -9,7 +9,7 @@
 /// If a media type for an extension changed by official IETF RFC, please keep the old entry but add
 /// the new one before it in the slice literal, e.g.:
 ///
-/// ```
+/// ```ignore
 /// - ("md", &["text/x-markdown"]),
 /// + ("md", &["text/markdown", "text/x-markdown"]),
 /// ```
