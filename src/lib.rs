@@ -401,7 +401,10 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
     }
 
     let (top, sub) = {
-        let split_idx = mime_str.find('/').unwrap();
+        let split_idx = match mime_str.find('/') {
+            Some(idx) => idx,
+            None => return None,
+        };
         (&mime_str[..split_idx], &mime_str[split_idx + 1..])
     };
 
@@ -432,7 +435,7 @@ pub fn octet_stream() -> Mime {
 mod tests {
     include!("mime_types.rs");
 
-    use super::{from_ext, from_path, expect_mime};
+    use super::{expect_mime, from_ext, from_path, get_mime_extensions_str};
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
 
@@ -522,5 +525,10 @@ mod tests {
                 n_ext
             );
         }
+    }
+
+    #[test]
+    fn test_get_mime_extensions_str_no_panic_if_bad_mime() {
+        assert_eq!(get_mime_extensions_str(""), None);
     }
 }
