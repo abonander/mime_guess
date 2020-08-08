@@ -102,6 +102,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("atx", &["application/vnd.antix.game-component"]),
     ("au", &["audio/basic"]),
     ("avi", &["video/x-msvideo"]),
+    ("avif", &["image/avif"]),
     ("aw", &["application/applixware"]),
     ("axa", &["audio/annodex"]),
     ("axs", &["application/olescript"]),
