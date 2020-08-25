@@ -401,10 +401,7 @@ pub fn get_mime_extensions_str(mut mime_str: &str) -> Option<&'static [&'static 
     }
 
     let (top, sub) = {
-        let split_idx = match mime_str.find('/') {
-            Some(idx) => idx,
-            None => return None,
-        };
+        let split_idx = mime_str.find('/')?;
         (&mime_str[..split_idx], &mime_str[split_idx + 1..])
     };
 
@@ -442,7 +439,6 @@ mod tests {
     use std::fmt::Debug;
     use std::path::Path;
 
-
     #[test]
     fn check_type_bounds() {
         fn assert_type_bounds<T: Clone + Debug + Send + Sync + 'static>() {}
@@ -474,7 +470,9 @@ mod tests {
             "image/gif".to_string()
         );
         assert_eq!(
-            from_path("/path/to/file.gif").first_or_octet_stream().to_string(),
+            from_path("/path/to/file.gif")
+                .first_or_octet_stream()
+                .to_string(),
             "image/gif".to_string()
         );
     }
@@ -501,7 +499,9 @@ mod tests {
     #[test]
     fn test_are_mime_types_parseable() {
         for (_, mimes) in MIME_TYPES {
-            mimes.iter().for_each(|s| { expect_mime(s); });
+            mimes.iter().for_each(|s| {
+                expect_mime(s);
+            });
         }
     }
 
