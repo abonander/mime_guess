@@ -354,6 +354,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("fcs", &["application/vnd.isac.fcs"]),
     ("fdf", &["application/vnd.fdf"]),
     ("fe_launch", &["application/vnd.denovo.fcselayout-link"]),
+    ("feature", &["text/x-gherkin"]),
     ("fg5", &["application/vnd.fujitsu.oasysgp"]),
     ("fgd", &["application/x-director"]),
     ("fh", &["image/x-freehand"]),
