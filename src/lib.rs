@@ -122,11 +122,11 @@ impl MimeGuess {
     /// ### Note: HTTP Applications
     /// For HTTP request and response bodies if a value for the `Content-Type` header
     /// cannot be determined it might be preferable to not send one at all instead of defaulting to
-    /// `application/content-stream` as the recipient will expect to infer the format directly from
+    /// `application/octet-stream` as the recipient will expect to infer the format directly from
     /// the content instead. ([RFC 7231, Section 3.1.1.5][rfc7231])
     ///
     /// On the contrary, for `multipart/form-data` bodies, the `Content-Type` of a form-data part is
-    /// assumed to be `text/plain` unless specified so a default of `application/content-stream`
+    /// assumed to be `text/plain` unless specified so a default of `application/octet-stream`
     /// for non-text parts is safer. ([RFC 7578, Section 4.4][rfc7578])
     ///
     /// [`application/octet-stream`]: https://docs.rs/mime/0.3/mime/constant.APPLICATION_OCTET_STREAM.html
@@ -287,7 +287,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> MimeGuess {
 /// Take care when processing files with assumptions based on the return value of this function.
 ///
 /// In HTTP applications, it might be [preferable][rfc7231] to not send a `Content-Type`
-/// header at all instead of defaulting to `application/content-stream`.
+/// header at all instead of defaulting to `application/octet-stream`.
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 #[deprecated(
@@ -330,7 +330,7 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
 ///
 /// ## Note
 /// In HTTP applications, it might be [preferable][rfc7231] to not send a `Content-Type`
-/// header at all instead of defaulting to `application/content-stream`.
+/// header at all instead of defaulting to `application/octet-stream`.
 ///
 /// [rfc7231]: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 #[deprecated(
