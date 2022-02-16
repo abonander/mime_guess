@@ -175,7 +175,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("cfs", &["application/x-cfs-compressed"]),
     ("cgm", &["image/cgm"]),
     ("chat", &["application/x-chat"]),
-    ("chm", &["application/octet-stream"]),
+    ("chm", &["application/vnd.ms-htmlhelp"]),
     ("chrt", &["application/vnd.kde.kchart"]),
     ("cif", &["chemical/x-cif"]),
     (
