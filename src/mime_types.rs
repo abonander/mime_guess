@@ -703,7 +703,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("mods", &["application/mods+xml"]),
     ("mov", &["video/quicktime"]),
     ("movie", &["video/x-sgi-movie"]),
-    ("mp2", &["video/mpeg"]),
+    ("mp2", &["audio/mpeg", "video/mpeg"]),
     ("mp21", &["application/mp21"]),
     ("mp2a", &["audio/mpeg"]),
     ("mp2v", &["video/mpeg"]),
