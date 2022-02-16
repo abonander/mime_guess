@@ -1224,7 +1224,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("tsd", &["application/timestamped-data"]),
     ("tsv", &["text/tab-separated-values"]),
     ("ttc", &["font/collection"]),
-    ("ttf", &["application/font-sfnt"]),
+    ("ttf", &["font/ttf", "application/x-font-ttf", "application/font-sfnt"]),
     ("ttl", &["text/turtle"]),
     ("tts", &["video/vnd.dlna.mpeg-tts"]),
     ("twd", &["application/vnd.simtech-mindmapper"]),
