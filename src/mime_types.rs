@@ -542,7 +542,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("java", &["application/octet-stream"]),
     ("jck", &["application/liquidmotion"]),
     ("jcz", &["application/liquidmotion"]),
-    ("jfif", &["image/pjpeg"]),
+    ("jfif", &["image/jpeg"]),
     ("jisp", &["application/vnd.jisp"]),
     ("jlt", &["application/vnd.hp-jlyt"]),
     ("jng", &["image/x-jng"]),
