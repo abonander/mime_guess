@@ -490,7 +490,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("ice", &["x-conference/x-cooltalk"]),
     ("icm", &["application/vnd.iccprofile"]),
     ("ico", &["image/x-icon"]),
-    ("ics", &["application/octet-stream"]),
+    ("ics", &["text/calendar"]),
     ("idl", &["text/plain"]),
     ("ief", &["image/ief"]),
     ("ifb", &["text/calendar"]),
