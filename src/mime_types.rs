@@ -862,6 +862,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("p7s", &["application/pkcs7-signature"]),
     ("p8", &["application/pkcs8"]),
     ("pac", &["application/x-ns-proxy-autoconfig"]),
+    ("parquet", &["application/vnd.apache.parquet", "application/x-parquet"]),
     ("pas", &["text/x-pascal"]),
     ("paw", &["application/vnd.pawaafile"]),
     ("pbd", &["application/vnd.powerbuilder6"]),
