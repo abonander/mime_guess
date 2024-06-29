@@ -9,6 +9,7 @@ keywords = ["mime", "filesystem", "extension"]
 repository = "https://github.com/abonander/mime_guess"
 documentation = "https://docs.rs/mime_guess/"
 readme = "README.md"
+autoexamples = true
 
 [features]
 default = ["rev-mappings"]
