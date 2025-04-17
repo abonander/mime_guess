@@ -20,7 +20,7 @@ default = ["rev-mappings"]
 rev-mappings = []
 
 [dependencies]
-mime = "0.3"
+mime = "0.3.4"
 unicase = "2.4.0"
 
 #[dependencies.phf]
