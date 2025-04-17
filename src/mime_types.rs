@@ -1408,7 +1408,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("wmv", &["video/x-ms-wmv"]),
     ("wmx", &["video/x-ms-wmx"]),
     ("wmz", &["application/x-ms-wmz"]),
-    ("woff", &["application/font-woff"]),
+    ("woff", &["font/woff", "application/font-woff"]),
     ("woff2", &["font/woff2"]),
     ("wpd", &["application/vnd.wordperfect"]),
     ("wpl", &["application/vnd.ms-wpl"]),
