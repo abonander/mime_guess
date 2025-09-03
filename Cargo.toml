@@ -12,8 +12,7 @@ readme = "README.md"
 
 [features]
 default = ["rev-mappings"]
-# FIXME: when `phf` release 0.8.0 is ready
-# phf-map = ["phf", "phf_codegen"]
+phf-map = ["phf", "phf_codegen"]
 
 # generate reverse-mappings for lookup of extensions by MIME type
 # default-on but can be turned off for smaller generated code
@@ -21,23 +20,19 @@ rev-mappings = []
 
 [dependencies]
 mime = "0.3.4"
-unicase = "2.4.0"
+uncased = "0.9.10"
 
-#[dependencies.phf]
-## version = "0.7.24"
-## git = "https://github.com/sfackler/rust-phf"
-#path = "../rust-phf/phf"
-#features = ["unicase"]
-#optional = true
+[dependencies.phf]
+version = "0.13.1"
+features = ["uncased"]
+optional = true
 
 [build-dependencies]
-unicase = "2.4.0"
+uncased = "0.9.10"
 
-#[build-dependencies.phf_codegen]
-#version = "0.7.24"
-#git = "https://github.com/sfackler/rust-phf"
-#path = "../rust-phf/phf_codegen"
-#optional = true
+[build-dependencies.phf_codegen]
+version = "0.13.1"
+optional = true
 
 [dev-dependencies]
 criterion = "0.3"

@@ -20,7 +20,7 @@
 //! returned MIME type.  Be wary of unsafe or un-validated assumptions about file structure or
 //! length.
 pub extern crate mime;
-extern crate unicase;
+extern crate uncased;
 
 pub use mime::Mime;
 
