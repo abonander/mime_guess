@@ -1003,6 +1003,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("qfx", &["application/vnd.intu.qfx"]),
     ("qht", &["text/x-html-insertion"]),
     ("qhtm", &["text/x-html-insertion"]),
+    ("qoi", &["image/qoi", "image/x-qoi"]),
     ("qps", &["application/vnd.publishare-delta-tree"]),
     ("qt", &["video/quicktime"]),
     ("qti", &["image/x-quicktime"]),
