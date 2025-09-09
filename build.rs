@@ -64,7 +64,7 @@ fn build_forward_map<W: Write>(out: &mut W) {
     for (key, values) in map_entries {
         forward_map.entry(
             UniCase::new(key),
-            &format!("&{:?}", values),
+            format!("&{:?}", values),
         );
     }
 
@@ -99,14 +99,14 @@ fn build_rev_map<W: Write>(out: &mut W) {
             exts.extend(sub_exts);
             let sub_end = exts.len();
 
-            sub_map.entry(sub, &format!("({}, {})", sub_start, sub_end));
+            sub_map.entry(sub, format!("({}, {})", sub_start, sub_end));
         }
 
         let top_end = exts.len();
 
         rev_map.entry(
             top,
-            &format!(
+            format!(
                 "TopLevelExts {{ start: {}, end: {}, subs: {} }}",
                 top_start, top_end, sub_map.build()
             ),

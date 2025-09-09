@@ -34,7 +34,5 @@ fn map_lookup<'key, 'map: 'key, V>(
     map: &'map phf::Map<UniCase<&'static str>, V>,
     key: &'key str,
 ) -> Option<&'map V> {
-    // FIXME: this doesn't compile unless we transmute `key` to `UniCase<&'static str>`
-    // https://github.com/sfackler/rust-phf/issues/169
     map.get(&UniCase::new(key))
 }
