@@ -8,7 +8,7 @@ use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
-use std::path::Path;
+use std::path::{self, Path};
 
 use std::collections::BTreeMap;
 
@@ -22,12 +22,14 @@ const PHF_PATH: &str = "::impl_::phf";
 
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("mime_types_generated.rs");
+    let mime_types_generated_filename = "mime_types_generated.rs";
+    let dest_path = Path::new(&out_dir).join(mime_types_generated_filename);
     let mut outfile = BufWriter::new(File::create(&dest_path).unwrap());
 
     println!(
-        "cargo:rustc-env=MIME_TYPES_GENERATED_PATH={}",
-        dest_path.display()
+        "cargo:rustc-env=MIME_TYPES_GENERATED_PATH={separator}{filename}",
+        separator = path::MAIN_SEPARATOR,
+        filename = mime_types_generated_filename,
     );
 
     #[cfg(feature = "phf")]

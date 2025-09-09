@@ -2,7 +2,7 @@ extern crate phf;
 
 use unicase::UniCase;
 
-include!(env!("MIME_TYPES_GENERATED_PATH"));
+include!(concat!(env!("OUT_DIR"), env!("MIME_TYPES_GENERATED_PATH")));
 
 #[cfg(feature = "rev-mappings")]
 struct TopLevelExts {
