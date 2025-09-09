@@ -1,6 +1,6 @@
 extern crate phf;
 
-use unicase::UniCase;
+use uncased::Uncased;
 
 include!(concat!(env!("OUT_DIR"), env!("MIME_TYPES_GENERATED_PATH")));
 
@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), env!("MIME_TYPES_GENERATED_PATH")));
 struct TopLevelExts {
     start: usize,
     end: usize,
-    subs: phf::Map<UniCase<&'static str>, (usize, usize)>,
+    subs: phf::Map<Uncased<'static>, (usize, usize)>,
 }
 
 pub fn get_mime_types(ext: &str) -> Option<&'static [&'static str]> {
@@ -31,10 +31,10 @@ pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'stat
 }
 
 fn map_lookup<'key, 'map: 'key, V>(
-    map: &'map phf::Map<UniCase<&'static str>, V>,
+    map: &'map phf::Map<Unicased<'static>, V>,
     key: &'key str,
 ) -> Option<&'map V> {
-    // FIXME: this doesn't compile unless we transmute `key` to `UniCase<&'static str>`
+    // FIXME: this doesn't compile unless we transmute `key` to `Uncased<'static>`
     // https://github.com/sfackler/rust-phf/issues/169
-    map.get(&UniCase::new(key))
+    map.get(&Uncased::new(key))
 }

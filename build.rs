@@ -1,8 +1,8 @@
 #[cfg(feature = "phf")]
 extern crate phf_codegen;
-extern crate unicase;
+extern crate uncased;
 
-use unicase::UniCase;
+use uncased::Uncased;
 
 use std::env;
 use std::fs::File;
@@ -62,18 +62,15 @@ fn build_forward_map<W: Write>(out: &mut W) {
     }
 
     for (key, values) in map_entries {
-        forward_map.entry(
-            UniCase::new(key),
-            &format!("&{:?}", values),
-        );
+        forward_map.entry(Uncased::new(key), &format!("&{:?}", values));
     }
 
     writeln!(
         out,
-        "static MIME_TYPES: phf::Map<UniCase<&'static str>, &'static [&'static str]> = \n{};",
+        "static MIME_TYPES: phf::Map<Uncased<'static>, &'static [&'static str]> = \n{};",
         forward_map.build()
     )
-        .unwrap();
+    .unwrap();
 }
 
 // Build reverse mappings (mime type -> ext)
@@ -108,16 +105,19 @@ fn build_rev_map<W: Write>(out: &mut W) {
             top,
             &format!(
                 "TopLevelExts {{ start: {}, end: {}, subs: {} }}",
-                top_start, top_end, sub_map.build()
+                top_start,
+                top_end,
+                sub_map.build()
             ),
         );
     }
 
     writeln!(
         out,
-        "static REV_MAPPINGS: phf::Map<UniCase<&'static str>, TopLevelExts> = \n{};",
+        "static REV_MAPPINGS: phf::Map<Uncased<'static>, TopLevelExts> = \n{};",
         rev_map.build()
-    ).unwrap();
+    )
+    .unwrap();
 
     writeln!(out, "const EXTS: &'static [&'static str] = &{:?};", exts).unwrap();
 }
@@ -126,19 +126,13 @@ fn build_rev_map<W: Write>(out: &mut W) {
 fn build_rev_map<W: Write>(out: &mut W) {
     use std::fmt::Write as _;
 
-    macro_rules! unicase_const {
-        ($s:expr) => ({
-            format_args!("{}({:?})", (if $s.is_ascii() {
-                "UniCase::ascii"
-            } else {
-                "UniCase::unicode"
-            }), $s)
-        })
-    }
-
     let dyn_map = get_rev_mappings();
 
-    write!(out, "static REV_MAPPINGS: &'static [(UniCase<&'static str>, TopLevelExts)] = &[").unwrap();
+    write!(
+        out,
+        "static REV_MAPPINGS: &'static [(Uncased<'static>, TopLevelExts)] = &["
+    )
+    .unwrap();
 
     let mut exts = Vec::new();
 
@@ -154,18 +148,20 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
             write!(
                 sub_map,
-                "({}, ({}, {})),",
-                unicase_const!(sub), sub_start, sub_end
-            ).unwrap();
+                "(Uncased::from_borrowed(\"{}\"), ({}, {})),",
+                sub, sub_start, sub_end
+            )
+            .unwrap();
         }
 
         let top_end = exts.len();
 
         write!(
             out,
-            "({}, TopLevelExts {{ start: {}, end: {}, subs: &[{}] }}),",
-            unicase_const!(top), top_start, top_end, sub_map
-        ).unwrap();
+            "(Uncased::from_borrowed(\"{}\"), TopLevelExts {{ start: {}, end: {}, subs: &[{}] }}),",
+            top, top_start, top_end, sub_map
+        )
+        .unwrap();
     }
 
     writeln!(out, "];").unwrap();
@@ -174,17 +170,16 @@ fn build_rev_map<W: Write>(out: &mut W) {
 }
 
 #[cfg(feature = "rev-mappings")]
-fn get_rev_mappings(
-) -> BTreeMap<UniCase<&'static str>, BTreeMap<UniCase<&'static str>, Vec<&'static str>>> {
+fn get_rev_mappings() -> BTreeMap<Uncased<'static>, BTreeMap<Uncased<'static>, Vec<&'static str>>> {
     // First, collect all the mime type -> ext mappings)
     let mut dyn_map = BTreeMap::new();
     for &(key, types) in MIME_TYPES {
         for val in types {
             let (top, sub) = split_mime(val);
             dyn_map
-                .entry(UniCase::new(top))
+                .entry(Uncased::new(top))
                 .or_insert_with(BTreeMap::new)
-                .entry(UniCase::new(sub))
+                .entry(Uncased::new(sub))
                 .or_insert_with(Vec::new)
                 .push(key);
         }
