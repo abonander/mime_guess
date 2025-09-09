@@ -11,7 +11,7 @@ use std::io::BufWriter;
 use std::path::{self, Path};
 
 use std::collections::BTreeMap;
-
+use std::fmt::{Display, Formatter};
 use mime_types::MIME_TYPES;
 
 #[path = "src/mime_types.rs"]
@@ -64,7 +64,7 @@ fn build_forward_map<W: Write>(out: &mut W) {
     for (key, values) in map_entries {
         forward_map.entry(
             UniCase::new(key),
-            format!("&{:?}", values),
+            format!("&{}", FormatStringArray(&values)),
         );
     }
 
@@ -119,7 +119,7 @@ fn build_rev_map<W: Write>(out: &mut W) {
         rev_map.build()
     ).unwrap();
 
-    writeln!(out, "const EXTS: &'static [&'static str] = &{:?};", exts).unwrap();
+    writeln!(out, "const EXTS: &'static [&'static str] = &{};", FormatStringArray(&exts)).unwrap();
 }
 
 #[cfg(all(not(feature = "phf"), feature = "rev-mappings"))]
@@ -170,7 +170,7 @@ fn build_rev_map<W: Write>(out: &mut W) {
 
     writeln!(out, "];").unwrap();
 
-    writeln!(out, "const EXTS: &'static [&'static str] = &{:?};", exts).unwrap();
+    writeln!(out, "const EXTS: &'static [&'static str] = &{};", FormatStringArray(&exts)).unwrap();
 }
 
 #[cfg(feature = "rev-mappings")]
@@ -195,4 +195,26 @@ fn get_rev_mappings(
 fn split_mime(mime: &str) -> (&str, &str) {
     let split_idx = mime.find('/').unwrap();
     (&mime[..split_idx], &mime[split_idx + 1..])
+}
+
+// -Z fmt-debug=none disables debug output: https://github.com/abonander/mime_guess/issues/97
+struct FormatString<'a>(&'a str);
+
+impl Display for FormatString<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "\"{}\"", self.0.escape_debug())
+    }
+}
+
+struct FormatStringArray<'a>(&'a [&'a str]);
+
+impl Display for FormatStringArray<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "[")?;
+        for s in self.0 {
+            writeln!(f, "{},", FormatString(s))?;
+        }
+
+        write!(f, "]")
+    }
 }
