@@ -160,6 +160,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("cct", &["application/x-director"]),
     ("ccxml", &["application/ccxml+xml"]),
     ("cd", &["text/plain"]),
+    ("cda", &["application/x-cdf"]),
     ("cdbcmsg", &["application/vnd.contact.cmsg"]),
     ("cdda", &["audio/aiff"]),
     ("cdf", &["application/x-cdf"]),
