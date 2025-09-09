@@ -585,6 +585,7 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("jsonml", &["application/jsonml+json"]),
     ("jsx", &["text/javascript"]),
     ("jsxbin", &["text/plain"]),
+    ("jwt", &["application/jwt"]),
     ("jxl", &["image/jxl"]),
     ("k25", &["image/x-kodak-k25"]),
     ("kar", &["audio/midi"]),
