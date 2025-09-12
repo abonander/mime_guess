@@ -20,22 +20,18 @@
 //! returned MIME type.  Be wary of unsafe or un-validated assumptions about file structure or
 //! length.
 pub extern crate mime;
-extern crate unicase;
 
 pub use mime::Mime;
 
 use std::ffi::OsStr;
 use std::iter::FusedIterator;
 use std::path::Path;
-use std::{iter, slice};
+use std::{iter};
+use std::ops::Range;
 
-#[cfg(feature = "phf")]
-#[path = "impl_phf.rs"]
-mod impl_;
-
-#[cfg(not(feature = "phf"))]
-#[path = "impl_bin_search.rs"]
-mod impl_;
+/// Look-up table (LUT) implementation. Semver-exempt (public for access from `build-lut`).
+#[doc(hidden)]
+pub mod lut;
 
 /// A "guess" of the MIME/Media Type(s) of an extension or path as one or more
 /// [`Mime`](struct.Mime.html) instances.
@@ -51,7 +47,7 @@ mod impl_;
 /// updated in patch releases in order to reflect the most up-to-date information possible.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 // FIXME: change repr when `mime` gains macro/const fn constructor
-pub struct MimeGuess(&'static [&'static str]);
+pub struct MimeGuess(lut::Mimes<'static>);
 
 impl MimeGuess {
     /// Guess the MIME type of a file (real or otherwise) with the given extension.
@@ -61,11 +57,7 @@ impl MimeGuess {
     /// If `ext` is empty or has no (currently) known MIME type mapping, then an empty guess is
     /// returned.
     pub fn from_ext(ext: &str) -> MimeGuess {
-        if ext.is_empty() {
-            return MimeGuess(&[]);
-        }
-
-        impl_::get_mime_types(ext).map_or(MimeGuess(&[]), |v| MimeGuess(v))
+        MimeGuess(lut::get_mimes(&lut::PACKED_DATA, ext).unwrap_or(lut::Mimes::EMPTY))
     }
 
     /// Guess the MIME type of `path` by its extension (as defined by
@@ -87,7 +79,7 @@ impl MimeGuess {
         path.as_ref()
             .extension()
             .and_then(OsStr::to_str)
-            .map_or(MimeGuess(&[]), Self::from_ext)
+            .map_or(MimeGuess(lut::Mimes::EMPTY), Self::from_ext)
     }
 
     /// `true` if the guess did not return any known mappings for the given path or extension.
@@ -111,7 +103,7 @@ impl MimeGuess {
     ///
     /// See [Note: Ordering](#note-ordering) above.
     pub fn first_raw(&self) -> Option<&'static str> {
-        self.0.get(0).cloned()
+        self.0.get(0)
     }
 
     /// Get the first guessed `Mime`, or if the guess is empty, return
@@ -173,7 +165,10 @@ impl MimeGuess {
     ///
     /// See [Note: Ordering](#note-ordering) above.
     pub fn iter_raw(&self) -> IterRaw {
-        IterRaw(self.0.iter().cloned())
+        IterRaw {
+            indices: 0 .. self.0.len(),
+            mimes: self.0,
+        }
     }
 }
 
@@ -231,23 +226,26 @@ impl ExactSizeIterator for Iter {
 ///
 /// See [Note: Ordering on `MimeGuess`](struct.MimeGuess.html#note-ordering).
 #[derive(Clone, Debug)]
-pub struct IterRaw(iter::Cloned<slice::Iter<'static, &'static str>>);
+pub struct IterRaw {
+    indices: Range<usize>,
+    mimes: lut::Mimes<'static>,
+}
 
 impl Iterator for IterRaw {
     type Item = &'static str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
+        self.indices.next().and_then(|i| self.mimes.get(i))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.0.size_hint()
+        self.indices.size_hint()
     }
 }
 
 impl DoubleEndedIterator for IterRaw {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back()
+        self.indices.next_back().and_then(|i| self.mimes.get(i))
     }
 }
 
@@ -255,7 +253,7 @@ impl FusedIterator for IterRaw {}
 
 impl ExactSizeIterator for IterRaw {
     fn len(&self) -> usize {
-        self.0.len()
+        self.indices.len()
     }
 }
 
@@ -430,9 +428,7 @@ pub fn octet_stream() -> Mime {
 
 #[cfg(test)]
 mod tests {
-    include!("mime_types.rs");
-
-    use super::{expect_mime, from_ext, from_path, get_mime_extensions_str};
+    use super::{expect_mime, from_ext, from_path, lut};
     #[allow(deprecated, unused_imports)]
     use std::ascii::AsciiExt;
 
@@ -498,7 +494,7 @@ mod tests {
 
     #[test]
     fn test_are_mime_types_parseable() {
-        for (_, mimes) in MIME_TYPES {
+        for (_, mimes) in lut::EXT_TO_MIME {
             mimes.iter().for_each(|s| {
                 expect_mime(s);
             });
@@ -508,7 +504,7 @@ mod tests {
     // RFC: Is this test necessary anymore? --@cybergeek94, 2/1/2016
     #[test]
     fn test_are_extensions_ascii() {
-        for (ext, _) in MIME_TYPES {
+        for (ext, _) in lut::EXT_TO_MIME {
             assert!(ext.is_ascii(), "Extension not ASCII: {:?}", ext);
         }
     }
@@ -516,7 +512,7 @@ mod tests {
     #[test]
     fn test_are_extensions_sorted() {
         // simultaneously checks the requirement that duplicate extension entries are adjacent
-        for (&(ext, _), &(n_ext, _)) in MIME_TYPES.iter().zip(MIME_TYPES.iter().skip(1)) {
+        for (&(ext, _), &(n_ext, _)) in lut::EXT_TO_MIME.iter().zip(lut::EXT_TO_MIME.iter().skip(1)) {
             assert!(
                 ext <= n_ext,
                 "Extensions in src/mime_types should be sorted lexicographically
@@ -528,7 +524,8 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "rev-mappings")]
     fn test_get_mime_extensions_str_no_panic_if_bad_mime() {
-        assert_eq!(get_mime_extensions_str(""), None);
+        assert_eq!(super::get_mime_extensions_str(""), None);
     }
 }

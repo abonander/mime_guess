@@ -4,7 +4,7 @@ extern crate unicase;
 
 use unicase::UniCase;
 
-use std::env;
+use std::{env, io};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
@@ -37,6 +37,12 @@ fn main() {
 
     #[cfg(feature = "rev-mappings")]
     build_rev_map(&mut outfile);
+}
+
+fn build_lut<W: Write>(out: &mut W) -> io::Result<()> {
+
+
+    Ok(())
 }
 
 // Build forward mappings (ext -> mime type)

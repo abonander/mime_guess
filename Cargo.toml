@@ -1,7 +1,7 @@
 [package]
 
 name = "mime_guess"
-version = "2.0.5"
+version = "3.0.0-alpha.1"
 authors = ["Austin Bonander <austin.bonander@gmail.com>"]
 license = "MIT"
 description = "A simple crate for detection of a file's MIME type by its extension."
@@ -9,10 +9,14 @@ keywords = ["mime", "filesystem", "extension"]
 repository = "https://github.com/abonander/mime_guess"
 documentation = "https://docs.rs/mime_guess/"
 readme = "README.md"
+edition = "2021"
+rust-version = "1.56.0"
 
 [features]
-default = ["rev-mappings"]
+default = []
 phf-map = ["phf", "phf_codegen"]
+
+build-lut = ["reqwest/blocking", "reqwest/json", "serde/derive", "serde/rc"]
 
 # generate reverse-mappings for lookup of extensions by MIME type
 # default-on but can be turned off for smaller generated code
@@ -21,10 +25,19 @@ rev-mappings = []
 [dependencies]
 mime = "0.3.4"
 unicase = "2.4.0"
+memchr = "2.7.5"
 
 [dependencies.phf]
 version = "0.13.1"
 features = ["unicase"]
+optional = true
+
+[dependencies.reqwest]
+version = "0.12.23"
+optional = true
+
+[dependencies.serde]
+version = "1.0.219"
 optional = true
 
 [build-dependencies]
@@ -46,3 +59,7 @@ required-features = ["rev-mappings"]
 [[bench]]
 name = "benchmark"
 harness = false
+
+[[bin]]
+name = "build-lut"
+required-features = ["build-lut"]
