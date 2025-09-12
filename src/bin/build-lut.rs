@@ -13,7 +13,7 @@ struct MimeData {
     extensions: Vec<Rc<str>>,
 
     #[serde(skip)]
-    data_idx: Option<PackedIdx>
+    index: Option<PackedIdx>
 }
 
 use mime_guess::lut::{PackedIdx, GUARD_END, GUARD_START};
@@ -39,7 +39,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .json::<BTreeMap<Rc<str>, MimeData>>()?;
 
     // Generate `mimes_data`: `GUARD_START <mime> GUARD_END..`
-    let mut mime_data = Vec::new();
+    let mut mime_offsets = Vec::<PackedIdx>::with_capacity(mimedb.len());
+    let mut packed_mimes = String::with_capacity(PackedIdx::MAX.into());
+
+    assert!(!mimedb.is_empty());
+
+    mime_offsets.push(0);
 
     for (mime, data) in &mut mimedb {
         // A lot of media-types in the database don't have any nominal extensions.
@@ -48,16 +53,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             continue;
         }
 
-        data.data_idx = Some(
-            mime_data
-                .len()
-                .try_into()
-                .unwrap_or_else(|_| panic!("Mime {mime:?} offset exceeds max value for `PackedIdx`"))
-        );
+        packed_mimes.push_str(&mime);
 
-        mime_data.push(lut::GUARD_START);
-        mime_data.extend_from_slice(mime.as_bytes());
-        mime_data.push(lut::GUARD_END);
+        data.index = Some((mime_offsets.len() - 1).try_into().expect("`mime_offsets.len() -1` exceeds `PackedIdx::MAX`"));
+
+        mime_offsets.push(packed_mimes.len().try_into().expect("`packed_mimes.len()` `exceeds `PackedIdx::MAX`"));
     }
 
     let mut extensions_to_mimes: BTreeMap<Rc<str>, Vec<Rc<str>>> = BTreeMap::new();
@@ -71,11 +71,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // Build `extension_lut`, `extension_data` and `extension_mimes`
-    let (first_ext, first_ext_mimes) = extensions_to_mimes
-        .iter()
+    let first_ext = extensions_to_mimes
+        .keys()
         .next()
         .expect("extensions_to_mimes cannot be empty");
-
 
     let first_lut_index = lut::extension_lut_index(0, first_ext)
         .expect("first extension is empty or is not ASCII");
@@ -86,63 +85,94 @@ fn main() -> Result<(), Box<dyn Error>> {
     // as long as we use checked arithmetic to avoid underflow.
     let lut_offset = first_lut_index;
 
-    // The first character in the LUT *must* be zero.
-    //
-    // To simplify the implementation, we still emit it in the look-up table.
-    let mut extension_lut = vec![0];
-    let mut extension_data = Vec::<u8>::new();
-    let mut extension_mimes = Vec::new();
+    let mut extension_lut = Vec::with_capacity(128);
 
-    write_extension_mime_entry(first_ext, first_ext_mimes, &mimedb, &mut extension_data, &mut extension_mimes);
+    let mut extension_offsets = Vec::<PackedIdx>::with_capacity(extensions_to_mimes.len());
 
-    let mut last_lut_index = 0;
-    let mut last_data_index = 0;
+    let mut packed_extensions = String::with_capacity(PackedIdx::MAX.into());
 
-    for (i, (ext, mimes)) in extensions_to_mimes.iter().enumerate().skip(1) {
-        let lut_index: u8 = lut::extension_lut_index(lut_offset, ext)
-            .unwrap_or_else(|| panic!("extension {i} ({ext:?}) could not be converted to a LUT index"));
+    let mut extension_mimes_offsets = Vec::<PackedIdx>::with_capacity(extensions_to_mimes.len());
 
-        // Only push a new LUT entry if it's a new index.
+    let mut extension_mimes = Vec::<PackedIdx>::with_capacity(PackedIdx::MAX.into());
+
+    // The first entries of all tables _must_ be zero.
+    extension_lut.push(0);
+    extension_offsets.push(0);
+    extension_mimes_offsets.push(0);
+
+    let mut last_lut_index: usize = 0;
+
+    for (i, (ext, mimes)) in extensions_to_mimes.iter().enumerate() {
+        let lut_index: usize = lut::extension_lut_index(lut_offset, ext)
+            .unwrap_or_else(|| panic!("extension {i} ({ext:?}) could not be converted to a LUT index"))
+            .into();
+
+        // Push a new LUT entry if it's a new index.
         if lut_index != last_lut_index {
-            let data_idx: PackedIdx = extension_data.len()
+            let offset_idx: PackedIdx = (extension_offsets.len() - 1)
                 .try_into()
-                .unwrap_or_else(|_| panic!("extension {i} ({ext:?}) data index overflows `PackedIdx`"));
+                .unwrap_or_else(|_| panic!("extension {i} ({ext:?}) offset index overflows `PackedIdx`"));
 
-            // Fill skipped entries in the LUT with the next index.
+            // Fill skipped entries in the LUT with copies of the next index.
             //
             // This way we don't have to search more than one index ahead to know how long
             // the extension data for a given LUT entry is.
             //
             // Empty entries will see a zero-length range.
-            extension_lut.extend((last_lut_index .. lut_index).map(|_| data_idx));
+            extension_lut.resize(usize::from(lut_index) + 1, offset_idx);
         }
 
         last_lut_index = lut_index;
 
-        write_extension_mime_entry(ext, mimes, &mimedb, &mut extension_data, &mut extension_mimes);
+        // Push the extension and the next (or last) offset.
+        packed_extensions.push_str(ext);
+        extension_offsets.push(
+            packed_extensions.len().try_into()
+                .unwrap_or_else(|_| panic!("extension {i} ({ext:?}) offset overflows `PackedIdx`"))
+        );
+
+        // Push the extension's mime indices
+        for mime in mimes {
+            let mime_data = mimedb.get(mime)
+                .unwrap_or_else(|| panic!("BUG: mime {mime:?} not added to `mimedb`"));
+
+            let mime_index = mime_data.index
+                .unwrap_or_else(|| panic!("BUG: mime {mime:?} not assigned an index"));
+
+            extension_mimes.push(mime_index);
+        }
+
+        // Push the next (or last) offset
+        extension_mimes_offsets.push(
+            extension_mimes
+                .len()
+                .try_into()
+                .unwrap_or_else(|_| panic!("extension {i} ({ext:?}) mime offset overflowed `PackedIdx`"))
+        );
     }
 
-    fs::write("src/lut/generated/extension_data", &extension_data)?;
-    fs::write("src/lut/generated/extension_mimes", &extension_mimes)?;
-    fs::write("src/lut/generated/mime_data", &mime_data)?;
+    // Since we don't always push a LUT entry, we need to push the last one.
+    extension_lut.push(extension_offsets.len().try_into().expect("extension_offsets.len() overflows `PackedIdx`"));
 
     let mut data_rs = BufWriter::new(File::create("src/lut/generated/data.rs")?);
 
-    // Note: resolved paths are actually relative to the `include!()`ed file.
+    // Note: will break with `-Z fmt-debug=none`
     writeln!(data_rs, "\
 pub const PACKED_DATA: PackedData<'static> = PackedData {{
-    lut_offset: {lut_offset},
-    extension_data: include_bytes!(\"extension_data\"),
-    extension_mimes: include_bytes!(\"extension_mimes\"),
-    mime_data: include_bytes!(\"mime_data\"),
-    extension_lut: &["
-    )?;
+    extension_lut: &{extension_lut:?},
+    lut_offset: {lut_offset:?},
 
-    for data_idx in extension_lut {
-        writeln!(data_rs, "    {data_idx},")?;
-    }
+    extension_offsets: &{extension_offsets:?},
+    packed_extensions: {packed_extensions:?},
 
-    writeln!(data_rs, "    ],\n}};")?;
+    extension_mimes_offsets: &{extension_mimes_offsets:?},
+    extension_mimes: &{extension_mimes:?},
+
+    mime_offsets: &{mime_offsets:?},
+    packed_mimes: {packed_mimes:?},
+}};")?;
+
+    data_rs.into_inner()?.sync_data()?;
 
     let mut test_data = BufWriter::new(File::create("src/lut/generated/test_data.rs")?);
 
@@ -168,41 +198,4 @@ pub const PACKED_DATA: PackedData<'static> = PackedData {{
     writeln!(test_data, "];")?;
 
     Ok(())
-}
-
-fn write_extension_mime_entry(
-    ext: &str,
-    mimes: &[Rc<str>],
-    mimedb: &BTreeMap<Rc<str>, MimeData>,
-    extension_data: &mut Vec<u8>,
-    extension_mimes: &mut Vec<u8>,
-) {
-    extension_data.push(GUARD_START);
-    extension_data.extend_from_slice(ext.as_bytes());
-    extension_data.push(GUARD_END);
-
-    let extension_mimes_idx: PackedIdx = extension_mimes
-        .len()
-        .try_into()
-        .unwrap_or_else(|_| panic!("extension {ext:?} offset in extension_mimes overflows `PackedIdx"));
-
-    extension_data.extend(extension_mimes_idx.to_le_bytes());
-
-    let mimes_len: u8 = mimes
-        .len()
-        .try_into()
-        .unwrap_or_else(|_| panic!("did not expect extension {ext:?} to have more than 256 Mimes"));
-
-    extension_mimes.push(mimes_len);
-
-    for mime in mimes {
-        let mime_data = mimedb
-            .get(mime)
-            .unwrap_or_else(|| panic!("BUG: Mime {mime:?} missing from `mimedb`"));
-
-        let data_idx = mime_data.data_idx
-            .unwrap_or_else(|| panic!("BUG: Mime {mime:?} was not assigned a `data_idx`"));
-
-        extension_mimes.extend(data_idx.to_le_bytes());
-    }
 }

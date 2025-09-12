@@ -63,3 +63,6 @@ harness = false
 [[bin]]
 name = "build-lut"
 required-features = ["build-lut"]
+
+[profile.bench]
+debug = "full"
