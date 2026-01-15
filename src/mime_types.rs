@@ -1534,4 +1534,5 @@ pub static MIME_TYPES: &[(&str, &[&str])] = &[
     ("zir", &["application/vnd.zul"]),
     ("zirz", &["application/vnd.zul"]),
     ("zmm", &["application/vnd.handheld-entertainment+xml"]),
+    ("zst", &["application/zstd"]),
 ];
