@@ -2,6 +2,8 @@ extern crate phf;
 
 use unicase::UniCase;
 
+// Always use a forward slash here — it works on all platforms. Windows
+// backslashes can break in complex distributed build environments.
 include!(concat!(env!("OUT_DIR"), "/mime_types_generated.rs"));
 
 #[cfg(feature = "rev-mappings")]
