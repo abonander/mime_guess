@@ -60,7 +60,8 @@ impl MimeGuess {
     ///
     /// If `ext` is empty or has no (currently) known MIME type mapping, then an empty guess is
     /// returned.
-    pub fn from_ext(ext: &str) -> MimeGuess {
+    pub fn from_ext<S: AsRef<str>>(ext: S) -> MimeGuess {
+        let ext = ext.as_ref();
         if ext.is_empty() {
             return MimeGuess(&[]);
         }
@@ -266,8 +267,8 @@ fn expect_mime(s: &str) -> Mime {
 }
 
 /// Wrapper of [`MimeGuess::from_ext()`](struct.MimeGuess.html#method.from_ext).
-pub fn from_ext(ext: &str) -> MimeGuess {
-    MimeGuess::from_ext(ext)
+pub fn from_ext<S: AsRef<str>>(ext: S) -> MimeGuess {
+    MimeGuess::from_ext(ext.as_ref())
 }
 
 /// Wrapper of [`MimeGuess::from_path()`](struct.MimeGuess.html#method.from_path).
@@ -337,7 +338,7 @@ pub fn mime_str_for_path_ext<P: AsRef<Path>>(path: P) -> Option<&'static str> {
     since = "2.0.0",
     note = "use `from_ext(search_ext).first_or_octet_stream()` instead"
 )]
-pub fn get_mime_type(search_ext: &str) -> Mime {
+pub fn get_mime_type<S: AsRef<str>>(search_ext: S) -> Mime {
     from_ext(search_ext).first_or_octet_stream()
 }
 
