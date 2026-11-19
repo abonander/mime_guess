@@ -11,20 +11,23 @@ struct TopLevelExts {
     subs: &'static [(UniCase<&'static str>, (usize, usize))],
 }
 
-pub fn get_mime_types(ext: &str) -> Option<&'static [&'static str]> {
+pub fn get_mime_types<S: AsRef<str>>(ext: S) -> Option<&'static [&'static str]> {
+    let ext = ext.as_ref();
     let ext = UniCase::new(ext);
 
     map_lookup(MIME_TYPES, &ext)
 }
 
 #[cfg(feature = "rev-mappings")]
-pub fn get_extensions(toplevel: &str, sublevel: &str) -> Option<&'static [&'static str]> {
+pub fn get_extensions<S: AsRef<str>, R: AsRef<str>>(toplevel: S, sublevel: R) -> Option<&'static [&'static str]> {
+    let toplevel = toplevel.as_ref();
     if toplevel == "*" {
         return Some(EXTS);
     }
 
     let top = map_lookup(REV_MAPPINGS, toplevel)?;
 
+    let sublevel = sublevel.as_ref();
     if sublevel == "*" {
         return Some(&EXTS[top.start..top.end]);
     }
